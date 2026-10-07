@@ -1,5 +1,5 @@
-import { showAlert, showInfoModal, updateProgress, operationStartCheck } from './utility.js';
-import { spinner, queueFullTableUpdate, createRestoreTableRow, addOrUpdateTableRow, formatSize, updateSelectedCountAndSize, setupSelectAllCheckbox, getSelectedWikiIds, setIcon, sortTable, rowTime } from './commonTabs.js';
+import { showAlert, showInfoModal, updateProgress, operationStartCheck } from '../../shared/utility.js';
+import { spinner, queueFullTableUpdate, createRestoreTableRow, addOrUpdateTableRow, formatSize, updateSelectedCountAndSize, setupSelectAllCheckbox, getSelectedWikiIds, setIcon, sortTable, rowTime } from '../../shared/tables.js';
 
 const restoreTableDataMap = new Map();
 window.restoreTableDataMap = restoreTableDataMap;

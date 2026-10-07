@@ -1,5 +1,5 @@
-import { element, t, loadCloudLabels, cloudCall, cloudErrorMessage, message, button, select, field, input, checkbox, createDialog, confirmCloud } from './cloudShared.js';
-import { byteSize } from './cloudPresentation.js';
+import { element, t, loadCloudLabels, cloudCall, cloudErrorMessage, message, button, select, field, input, checkbox, createDialog, confirmCloud } from './shared.js';
+import { byteSize } from './presentation.js';
 
 function targetConfig(target) { return target?.config ? { ...target, ...target.config } : target || {}; }
 

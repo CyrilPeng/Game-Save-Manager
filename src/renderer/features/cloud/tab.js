@@ -1,7 +1,7 @@
-import { element, t, loadCloudLabels, cloudCall, cloudErrorMessage, message, button, select, field, input, checkbox, confirmCloud, createDialog, previewAndUpload } from './cloudShared.js';
-import { mountCloudSettings } from './cloudSettings.js';
-import { byteSize, snapshotDate, versionData, filterVersions, jobActions } from './cloudPresentation.js';
-import { showManageBackupsModal } from './modalDisplay.js';
+import { element, t, loadCloudLabels, cloudCall, cloudErrorMessage, message, button, select, field, input, checkbox, confirmCloud, createDialog, previewAndUpload } from './shared.js';
+import { mountCloudSettings } from './settings.js';
+import { byteSize, snapshotDate, versionData, filterVersions, jobActions } from './presentation.js';
+import { showManageBackupsModal } from '../../shared/dialogs.js';
 
 let reloadTab;
 

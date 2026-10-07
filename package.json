@@ -4,14 +4,14 @@
   "description": "游戏存档的本地版本备份、云端双备份与跨设备恢复",
   "main": "dist/out/main/main.js",
   "scripts": {
-    "tailwind:build": "npx tailwindcss -i ./src/renderer/styles.css -o ./src/renderer/tailwind-output.css --minify",
-    "tailwind:watch": "npx tailwindcss -i ./src/renderer/styles.css -o ./src/renderer/tailwind-output.css --watch",
+    "tailwind:build": "npx tailwindcss -i ./src/renderer/styles/styles.css -o ./src/renderer/styles/tailwind-output.css --minify",
+    "tailwind:watch": "npx tailwindcss -i ./src/renderer/styles/styles.css -o ./src/renderer/styles/tailwind-output.css --watch",
     "clean": "rimraf dist/out",
     "start": "npm run clean && npm run tailwind:build && concurrently -k -s first -n \"TAILWIND,RENDERER,MAIN,ELECTRON\" \"npm:tailwind:watch\" \"webpack --watch --config webpack.renderer.config.js --mode development\" \"webpack --watch --config webpack.main.config.js --config webpack.preload.config.js --mode development\" \"wait-on dist/out/main/main.js && electron .\"",
     "build": "npm run clean && cross-env NODE_ENV=production npm run tailwind:build && cross-env NODE_ENV=production webpack --config webpack.main.config.js --config webpack.preload.config.js --config webpack.renderer.config.js --mode production",
     "package": "npm run build && electron-builder --dir",
     "test": "node --test --test-timeout=30000 tests/*.test.js",
-    "test:electron": "node tests/cloud-electron-e2e.cjs"
+    "test:electron": "cross-env NODE_ENV=production webpack --config webpack.preload.config.js --mode production && node tests/cloud-electron-e2e.cjs"
   },
   "build": {
     "extends": null,

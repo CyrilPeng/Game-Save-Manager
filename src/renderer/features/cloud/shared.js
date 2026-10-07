@@ -1,4 +1,4 @@
-import { byteSize } from './cloudPresentation.js';
+import { byteSize } from './presentation.js';
 
 export function element(tag, text, className = '') {
     const node = document.createElement(tag);

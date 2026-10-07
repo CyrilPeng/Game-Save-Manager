@@ -1,4 +1,4 @@
-import { updateTranslations, showAlert, operationStartCheck, wrapNumberInput } from './utility.js';
+import { updateTranslations, showAlert, operationStartCheck, wrapNumberInput } from '../../shared/utility.js';
 
 window.api.receive('apply-language', () => {
     updateTranslations(document);

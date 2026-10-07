@@ -1,4 +1,4 @@
-// Run with: node test/cloud-electron-e2e.cjs
+// Run with: npm run test:electron
 // Uses only temporary local data, hidden windows and a loopback WebDAV fixture.
 const fs = require('node:fs');
 const fsp = require('node:fs/promises');
@@ -48,7 +48,7 @@ async function runElectron() {
     let server;
     let exitCode = 1;
     const timeout = setTimeout(() => { console.error('Electron fixture deadline exceeded.'); app.exit(1); }, 55000);
-    const preload = path.resolve(__dirname, '../src/preload/preload.js');
+    const preload = path.resolve(__dirname, '../dist/out/preload/preload.js');
     const fixture = path.join(root, 'trusted-fixture.html');
     const fixtureURL = pathToFileURL(fixture).href;
 

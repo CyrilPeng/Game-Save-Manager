@@ -1,6 +1,11 @@
+import { createTableUpdateQueue } from './tableUpdateQueue.js';
+import { setIcon, getPlatformIcon, formatSize, createBackupTableRow, createRestoreTableRow } from './tableRows.js';
+import { orderEntries, rowTime, platformOrder } from './sorting.js';
+export { setIcon, getPlatformIcon, formatSize, createBackupTableRow, createRestoreTableRow, platformOrder } from './tableRows.js';
+export { rowTime } from './sorting.js';
 import { showAlert, updateTranslations } from './utility.js';
-import { checkAndWarnUnsavedChanges } from './customTab.js';
-import { showManageBackupsModal, showAutoBackupModal, showHiddenGamesModal, showAutoBackupSummary, refreshAutoBackupModalStatus } from './modalDisplay.js';
+import { checkAndWarnUnsavedChanges } from '../features/custom/tab.js';
+import { showManageBackupsModal, showAutoBackupModal, showHiddenGamesModal, showAutoBackupSummary, refreshAutoBackupModalStatus } from './dialogs.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     updateTranslations(document);
@@ -93,7 +98,7 @@ function initializeTabs() {
                     contentEl.classList.remove('animate-fadeInShift', 'animate-fadeOut');
                 }
                 if (tab.id === 'custom') {
-                    loadEntriesFromJson();
+                    window.loadEntriesFromJson();
                 }
                 showTab(tab, tabElements, options);
             });
@@ -188,86 +193,16 @@ function hideLoadingIndicator(tabName) {
 // ======================================================================
 // Table updates
 // ======================================================================
-const tableUpdateStates = new Map();
-
-function getTableUpdateState(tabName) {
-    if (!tableUpdateStates.has(tabName)) {
-        tableUpdateStates.set(tabName, {
-            running: false,
-            promise: null,
-            fullUpdatePending: false,
-            loaderRequested: false,
-            loadTable: null,
-            rowActions: new Map()
-        });
-    }
-    return tableUpdateStates.get(tabName);
-}
-
-// Reloads coalesce into one trailing load, then the latest queued action per row
-async function processTableUpdates(tabName, state) {
-    let loaderVisible = false;
-    window.api.send('update-status', `updating_${tabName}`, true);
-
-    try {
-        while (state.fullUpdatePending || state.rowActions.size > 0) {
-            if (state.fullUpdatePending) {
-                state.fullUpdatePending = false;
-
-                if (state.loaderRequested) {
-                    if (!loaderVisible) {
-                        await showLoadingIndicator(tabName);
-                        loaderVisible = true;
-                    }
-                    state.loaderRequested = false;
-                }
-
-                await state.loadTable();
-                continue;
-            }
-
-            const rowActions = Array.from(state.rowActions.values());
-            state.rowActions.clear();
-            for (const action of rowActions) {
-                if (action.type === 'remove') {
-                    performRemoveTableRow(tabName, action.wikiId);
-                } else {
-                    await performAddOrUpdateTableRow(tabName, action.wikiId);
-                }
-            }
-        }
-    } finally {
-        if (loaderVisible) {
-            hideLoadingIndicator(tabName);
-        }
-        window.api.send('update-status', `updating_${tabName}`, false);
-    }
-}
-
+const tableUpdates = createTableUpdateQueue({
+    setBusy: (tab, busy) => window.api.send('update-status', `updating_${tab}`, busy),
+    showLoading: showLoadingIndicator,
+    hideLoading: hideLoadingIndicator,
+    updateRow: performAddOrUpdateTableRow,
+    removeRow: performRemoveTableRow,
+    onError: (tab, error) => console.error(`Error updating ${tab} table:`, error)
+});
 export function queueFullTableUpdate(tabName, loader, loadTable) {
-    const state = getTableUpdateState(tabName);
-    state.fullUpdatePending = true;
-    state.loaderRequested ||= Boolean(loader);
-    state.loadTable = loadTable;
-
-    if (!state.running) {
-        state.running = true;
-        state.promise = processTableUpdates(tabName, state)
-            .catch(error => {
-                console.error(`Error updating ${tabName} table:`, error);
-            })
-            .finally(() => {
-                state.running = false;
-                state.promise = null;
-
-                // Defensive: a request should not land between the final check and cleanup
-                if (state.fullUpdatePending || state.rowActions.size > 0) {
-                    queueFullTableUpdate(tabName, state.loaderRequested, state.loadTable);
-                }
-            });
-    }
-
-    return state.promise;
+    return tableUpdates.reload(tabName, loader, loadTable);
 }
 
 // ======================================================================
@@ -302,108 +237,6 @@ function setupSearchFilter(tabName) {
     });
 }
 
-export function setIcon(row, iconName, show) {
-    const titleCell = row.querySelector('th[scope="row"]');
-    if (!titleCell) return;
-
-    const iconSpan = titleCell.querySelector(`span[data-icon="${iconName}"]`);
-    if (iconSpan) {
-        iconSpan.classList.toggle('hidden', !show);
-    }
-}
-
-export function getPlatformIcon(platform, iconMap) {
-    return iconMap[platform] || '';
-}
-
-export function formatSize(sizeInBytes) {
-    if (sizeInBytes === 0) return '0 B';
-    const i = Math.floor(Math.log(sizeInBytes) / Math.log(1024));
-    return (sizeInBytes / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i];
-}
-
-export const platformOrder = ['Custom', 'Steam', 'Epic', 'GOG', 'Xbox', 'EA', 'Ubisoft', 'Blizzard'];
-
-export function createBackupTableRow(gameTitle, platformIcons, backupSize, newestBackupTime, wikiPageId) {
-    const row = document.createElement('tr');
-    row.setAttribute('data-wiki-id', wikiPageId);
-    row.classList.add('bg-white', 'border-b', 'dark:bg-gray-800', 'dark:border-gray-700', 'hover:bg-gray-50', 'dark:hover:bg-gray-600');
-    row.innerHTML = `
-        <td class="py-4 pl-4">
-            <div class="flex items-center">
-                <input type="checkbox" class="row-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:outline-hidden dark:bg-gray-700 dark:border-gray-600">
-                <label class="sr-only">checkbox</label>
-            </div>
-        </td>
-        <th scope="row" class="pr-6 py-4 wrap-break-words font-medium text-gray-900 dark:text-white">
-            <span data-icon="pin" class="hidden"><i class="fa-solid fa-thumbtack text-red-500 mr-2"></i></span>
-            <span data-icon="star" class="hidden"><i class="fa-solid fa-star text-yellow-500 mr-2"></i></span>
-            <span data-icon="timer" class="hidden"><i class="fa-solid fa-clock-rotate-left text-green-500 mr-2"></i></span>
-            <span class="game-title-text"></span>
-        </th>
-        <td class="px-6 py-4 truncate">
-            ${platformIcons}
-        </td>
-        <td class="px-6 py-4 truncate backup-size">
-            ${backupSize}
-        </td>
-        <td class="px-6 py-4 truncate newest-backup-time">
-        </td>
-        <td class="px-6 py-4 truncate text-center">
-            <button class="row-menu-button inline-flex items-center p-2 text-sm font-medium text-center text-gray-900 hover:bg-transparent focus:outline-hidden dark:text-white"
-                type="button">
-                <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 16 3">
-                    <path
-                        d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" />
-                </svg>
-            </button>
-        </td>
-    `;
-    row.querySelector('.game-title-text').textContent = gameTitle;
-    row.querySelector('.newest-backup-time').textContent = newestBackupTime;
-    return row;
-}
-
-export function createRestoreTableRow(gameTitle, backupCount, backupSize, newestBackupTime, wikiPageId) {
-    const row = document.createElement('tr');
-    row.setAttribute('data-wiki-id', wikiPageId);
-    row.classList.add('bg-white', 'border-b', 'dark:bg-gray-800', 'dark:border-gray-700', 'hover:bg-gray-50', 'dark:hover:bg-gray-600');
-    row.innerHTML = `
-        <td class="py-4 pl-4">
-            <div class="flex items-center">
-                <input type="checkbox" class="row-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:outline-hidden dark:bg-gray-700 dark:border-gray-600">
-                <label class="sr-only">checkbox</label>
-            </div>
-        </td>
-        <th scope="row" class="pr-6 py-4 wrap-break-words font-medium text-gray-900 dark:text-white">
-            <span data-icon="pin" class="hidden"><i class="fa-solid fa-thumbtack text-red-500 mr-2"></i></span>
-            <span data-icon="star" class="hidden"><i class="fa-solid fa-star text-yellow-500 mr-2"></i></span>
-            <span data-icon="timer" class="hidden"><i class="fa-solid fa-clock-rotate-left text-green-500 mr-2"></i></span>
-            <span class="game-title-text"></span>
-        </th>
-        <td class="px-6 py-4 truncate backup-count">
-            ${backupCount}
-        </td>
-        <td class="px-6 py-4 truncate backup-size">
-            ${backupSize}
-        </td>
-        <td class="px-6 py-4 truncate newest-backup-time">
-        </td>
-        <td class="px-6 py-4 truncate text-center">
-            <button class="row-menu-button inline-flex items-center p-2 text-sm font-medium text-center text-gray-900 hover:bg-transparent focus:outline-hidden dark:text-white"
-                type="button">
-                <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 16 3">
-                    <path
-                        d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" />
-                </svg>
-            </button>
-        </td>
-    `;
-    row.querySelector('.game-title-text').textContent = gameTitle;
-    row.querySelector('.newest-backup-time').textContent = newestBackupTime;
-    return row;
-}
-
 // --- Column sorting ---
 
 // ======================================================================
@@ -419,23 +252,6 @@ const pendingSorts = { backup: null, restore: null };
 const sortRuns = { backup: 0, restore: 0 };
 
 // The time each tab shows: backup rows date the save files, restore rows date the backup.
-export const rowTime = (game) => (game && (game.latest_modified || game.latest_backup)) || '';
-
-// Raw values from the data maps, not the cells; null sorts last.
-const sortValueGetters = {
-    size: (game) => Number(game && game.backup_size) || 0,
-    count: (game) => (game && Array.isArray(game.backups) ? game.backups.length : 0),
-    // Zero-padded YYYY/MM/DD HH:mm compares correctly as plain text.
-    time: (game) => (/^\d{4}\/\d{2}\/\d{2}/.test(rowTime(game)) ? rowTime(game) : null),
-    platform: (game) => {
-        const ranks = ((game && game.platform) || [])
-            .map(platform => platformOrder.indexOf(platform))
-            .filter(rank => rank >= 0)
-            .sort((a, b) => a - b);
-        return ranks.length ? ranks.map(rank => String(rank).padStart(2, '0')).join(',') : null;
-    },
-};
-
 function getSortEntries(tabName) {
     const dataMap = tabName === 'backup' ? window.backupTableDataMap : window.restoreTableDataMap;
     return Array.from(document.querySelectorAll(`#${tabName} tbody tr`)).map(row => {
@@ -450,33 +266,6 @@ function getSortEntries(tabName) {
             titleToSort: (game && game.titleToSort) || (titleCell ? titleCell.textContent.trim() : ''),
         };
     });
-}
-
-function orderEntries(entries, { key, direction }, byTitle) {
-    const sign = direction === 'desc' ? -1 : 1;
-
-    if (key === 'title') {
-        return [...entries].sort((a, b) => byTitle(a, b) * sign);
-    }
-
-    const getValue = sortValueGetters[key] || (() => null);
-    const withValue = [];
-    const withoutValue = [];
-    entries.forEach(entry => {
-        const value = getValue(entry.game);
-        (value === null || value === undefined ? withoutValue : withValue).push({ ...entry, value });
-    });
-
-    // Direction flips the column only; ties stay alphabetical in both directions.
-    withValue.sort((a, b) => {
-        const primary = typeof a.value === 'number' && typeof b.value === 'number'
-            ? a.value - b.value
-            : String(a.value).localeCompare(String(b.value));
-        return (primary * sign) || byTitle(a, b);
-    });
-    withoutValue.sort(byTitle);
-
-    return [...withValue, ...withoutValue];
 }
 
 function updateSortIndicators(tabName) {
@@ -652,14 +441,8 @@ async function performAddOrUpdateTableRow(tabName, wikiId) {
     sortTable(tabName);
 }
 
-export async function addOrUpdateTableRow(tabName, wikiId) {
-    const state = getTableUpdateState(tabName);
-    if (state.running) {
-        state.rowActions.set(wikiId.toString(), { type: 'update', wikiId });
-        return state.promise;
-    }
-
-    return performAddOrUpdateTableRow(tabName, wikiId);
+export function addOrUpdateTableRow(tabName, wikiId) {
+    return tableUpdates.update(tabName, wikiId);
 }
 
 // Helper function to remove a game row from a tab's table and clean up its data map
@@ -682,13 +465,7 @@ function performRemoveTableRow(tabName, wikiId) {
 }
 
 export function removeTableRow(tabName, wikiId) {
-    const state = getTableUpdateState(tabName);
-    if (state.running) {
-        state.rowActions.set(wikiId.toString(), { type: 'remove', wikiId });
-        return;
-    }
-
-    performRemoveTableRow(tabName, wikiId);
+    return tableUpdates.remove(tabName, wikiId);
 }
 
 // ======================================================================

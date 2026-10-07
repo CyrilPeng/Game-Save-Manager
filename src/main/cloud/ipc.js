@@ -1,17 +1,7 @@
 const { cloudError, classifyError } = require('./queue');
 const { UUID } = require('./repository');
 
-const COMMANDS = Object.freeze({
-    getState: [], saveTarget: ['config', 'secrets', 'sessionOnly'], removeTarget: ['targetId'],
-    testConnection: ['targetId', 'config', 'secrets'], discoverRepositories: ['targetId'],
-    createRepository: ['targetId'], selectRepository: ['targetId', 'repositoryId'],
-    setAutomatic: ['targetId', 'gameKeys'], setCacheBudget: ['bytes'], setDevice: ['name'],
-    listLocalSnapshots: ['gameId'], previewUpload: ['targetId', 'selection', 'gameIds'],
-    upload: ['targetId', 'gameId', 'folder'], uploadMany: ['targetId', 'selection', 'gameIds'],
-    refresh: ['targetId'], download: ['targetId', 'versionId', 'revision'], restore: ['targetId', 'versionId', 'revision'],
-    deleteVersion: ['targetId', 'versionId', 'revision', 'confirmPermanent'], controlJob: ['jobId', 'action'],
-    chooseRestoreMapping: ['jobId', 'folder'], confirmRestore: ['jobId', 'confirmRegistry']
-});
+const { CLOUD_COMMANDS: COMMANDS } = require('../../shared/ipc');
 const CLOUD_CHANNELS = Object.freeze(Object.keys(COMMANDS).map(command => `cloud:${command}`));
 
 function validateInput(command, input = {}) {

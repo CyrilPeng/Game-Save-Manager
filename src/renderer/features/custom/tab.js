@@ -1,4 +1,4 @@
-import { operationStartCheck, updateTranslations, showInfoModal } from './utility.js';
+import { operationStartCheck, updateTranslations, showInfoModal } from '../../shared/utility.js';
 
 let lastSavedEntries = [];
 

@@ -1,5 +1,5 @@
 import semver from 'semver';
-import { updateTranslations } from './utility.js';
+import { updateTranslations } from '../../shared/utility.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const latestVersionSpan = document.getElementById('latest-version');

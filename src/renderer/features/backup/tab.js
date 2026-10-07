@@ -1,5 +1,5 @@
-import { showAlert, showInfoModal, updateProgress, operationStartCheck } from './utility.js';
-import { spinner, queueFullTableUpdate, createBackupTableRow, addOrUpdateTableRow, getPlatformIcon, formatSize, updateSelectedCountAndSize, setupSelectAllCheckbox, getSelectedWikiIds, setIcon, platformOrder, sortTable, rowTime } from './commonTabs.js';
+import { showAlert, showInfoModal, updateProgress, operationStartCheck } from '../../shared/utility.js';
+import { spinner, queueFullTableUpdate, createBackupTableRow, addOrUpdateTableRow, getPlatformIcon, formatSize, updateSelectedCountAndSize, setupSelectAllCheckbox, getSelectedWikiIds, setIcon, platformOrder, sortTable, rowTime } from '../../shared/tables.js';
 
 const backupTableDataMap = new Map();
 window.backupTableDataMap = backupTableDataMap;
