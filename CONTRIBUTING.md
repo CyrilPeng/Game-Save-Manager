@@ -39,7 +39,7 @@
 
 版本号同时更新 package.json 和 package-lock.json，并在 CHANGELOG.md 写入对应版本。运行 npm run dist 生成 dist/release 下的 Windows x64 安装包。
 
-推送 v* 标签会自动触发 Build Windows installer，构建前检查标签、应用版本、锁文件与更新日志一致，然后执行完整检查、集成测试和安装包构建。例如：
+推送 v* 标签会自动触发 Build Windows installer，构建前检查标签、应用版本、锁文件与更新日志一致，然后执行完整检查、集成测试和安装包构建。全部通过后自动发布 GitHub Release，发行文案取自 CHANGELOG.md 的对应版本正文，不包含“未发布”或其他版本。先创建草稿并上传完整资产，再公开发布；包含预发布标识的版本自动标记为 Pre-release。例如：
 
 ```bash
 git tag -a v3.0.0 -m "v3.0.0"
@@ -52,6 +52,12 @@ git push origin v3.0.0
 gh workflow run release.yml --ref main -f ref=<commit-sha>
 ```
 
-构建产物 game-save-manager-windows-x64 包含安装包、blockmap、两个数据库文件和 build-info.json；构建摘要与 build-info.json 记录实际检出的 commit，便于确认手动构建的目标。工作流生成构建产物，发布到 Releases 时使用对应版本的更新说明，并附带 database.db 和 database-manifest.json，才能启用该版本的数据库在线更新。
+手动构建默认只验证，不发布。需要为已有版本标签补发时，将 ref 填为版本 tag，并勾选 publish；分支和任意 commit 不能用此模式发布。例如：
+
+```bash
+gh workflow run release.yml --ref main -f ref=v3.0.0 -F publish=true
+```
+
+构建产物 game-save-manager-windows-x64 包含安装包、blockmap、两个数据库文件、build-info.json 和 release-notes.md；构建摘要与 build-info.json 记录实际检出的 commit。Release 附带安装包、blockmap、build-info.json、database.db 和 database-manifest.json，支持该版本的数据库在线更新。发布任务会再次确认远端标签与通过测试的构建提交一致；失败后重跑会续传尚未公开的草稿，已公开版本不会被覆盖。
 
 阶段性工作使用中文约定式提交，例如 refactor(backup): 拆分快照索引。提交前同步更新 CHANGELOG.md：尚未归入版本的内容写在“未发布”，发行时整理为对应版本，按“新增”“修复”“维护与文档”“运行说明”分组；仅保留有实际内容的分组。GitHub Releases 使用对应版本的更新说明。合并前检查 Windows CI，并在真实存档的副本上完成一次手动备份恢复验证。

@@ -53,7 +53,7 @@ npm start
 | npm run verify:resources         | Validate the bundled database                                            |
 | npm run dist                     | Build a Windows x64 installer without publishing                         |
 
-Pushing a v* tag automatically builds the Windows installer. For manual validation, enter a branch, tag or commit SHA in the ref input of Build Windows installer in Actions. Build artifacts include the actual source commit. See [CONTRIBUTING.md](./CONTRIBUTING.md) for module ownership, test boundaries and release steps.
+Pushing a v* tag automatically builds the Windows installer and publishes a GitHub Release after all checks pass, using the matching changelog section as release notes. For manual validation, enter a branch, tag or commit SHA in the ref input of Build Windows installer in Actions; manual validation does not publish by default. Build artifacts include the actual source commit. See [CONTRIBUTING.md](./CONTRIBUTING.md) for module ownership, test boundaries and release steps.
 
 ## Contributions
 
