@@ -22,197 +22,213 @@ let placementToken = 0;
 // Geometry
 // ======================================================================
 function clamp(value, min, max) {
-    return Math.min(Math.max(value, min), max);
+  return Math.min(Math.max(value, min), max);
 }
 
 // ======================================================================
 // Window lifecycle
 // ======================================================================
 function createMenuWindow(parent) {
-    const win = new BrowserWindow({
-        ...PARKED_BOUNDS,
-        parent,
-        frame: false,
-        transparent: true,
-        backgroundColor: '#00000000',
-        show: false,
-        resizable: false,
-        movable: false,
-        minimizable: false,
-        maximizable: false,
-        fullscreenable: false,
-        skipTaskbar: true,
-        alwaysOnTop: true,
-        // The shadow is CSS so it follows the rounded corners, not the window frame.
-        hasShadow: false,
-        // Never take focus, so clicking the menu cannot blur the parent.
-        focusable: false,
-        type: 'toolbar',
-        webPreferences: {
-            preload: path.join(__dirname, '../preload/preload.js'),
-            sandbox: false,
-        },
-    });
+  const win = new BrowserWindow({
+    ...PARKED_BOUNDS,
+    parent,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    show: false,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    // The shadow is CSS so it follows the rounded corners, not the window frame.
+    hasShadow: false,
+    // Never take focus, so clicking the menu cannot blur the parent.
+    focusable: false,
+    type: 'toolbar',
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/preload.js'),
+      sandbox: false,
+    },
+  });
 
-    win.setMenuBarVisibility(false);
-    win.loadFile(path.join(__dirname, '../renderer/menu.html'));
+  win.setMenuBarVisibility(false);
+  win.loadFile(path.join(__dirname, '../renderer/menu.html'));
 
-    return win;
+  return win;
 }
 
 function attachParentListeners(parent) {
-    if (parentListeners && parentListeners.parent === parent) return;
+  if (parentListeners && parentListeners.parent === parent) return;
 
-    // Any parent movement invalidates the anchor, so dismiss instead of chasing it.
-    const dismiss = () => hideRowMenu();
-    const events = ['move', 'resize', 'blur', 'minimize'];
-    events.forEach(name => parent.on(name, dismiss));
-    parentListeners = { parent, dismiss, events };
+  // Any parent movement invalidates the anchor, so dismiss instead of chasing it.
+  const dismiss = () => hideRowMenu();
+  const events = ['move', 'resize', 'blur', 'minimize'];
+  events.forEach((name) => parent.on(name, dismiss));
+  parentListeners = { parent, dismiss, events };
 
-    parent.once('closed', () => {
-        events.forEach(name => parent.off(name, dismiss));
-        parentListeners = null;
-        if (menuWindow && !menuWindow.isDestroyed()) {
-            menuWindow.destroy();
-        }
-        menuWindow = null;
-        parentWindow = null;
-        pendingSend = null;
-        pendingAnchor = null;
-        visible = false;
-    });
+  parent.once('closed', () => {
+    events.forEach((name) => parent.off(name, dismiss));
+    parentListeners = null;
+    if (menuWindow && !menuWindow.isDestroyed()) {
+      menuWindow.destroy();
+    }
+    menuWindow = null;
+    parentWindow = null;
+    pendingSend = null;
+    pendingAnchor = null;
+    visible = false;
+  });
 }
 
 function ensureMenuWindow(parent) {
-    parentWindow = parent;
-    attachParentListeners(parent);
+  parentWindow = parent;
+  attachParentListeners(parent);
 
-    if (menuWindow && !menuWindow.isDestroyed()) {
-        return menuWindow;
-    }
-
-    visible = false;
-    menuWindow = createMenuWindow(parent);
-    menuWindow.webContents.once('did-finish-load', () => {
-        if (!pendingSend) return;
-        const payload = pendingSend;
-        pendingSend = null;
-        if (menuWindow && !menuWindow.isDestroyed()) {
-            menuWindow.webContents.send('render-row-menu', payload);
-        }
-    });
-
+  if (menuWindow && !menuWindow.isDestroyed()) {
     return menuWindow;
+  }
+
+  visible = false;
+  menuWindow = createMenuWindow(parent);
+  menuWindow.webContents.once('did-finish-load', () => {
+    if (!pendingSend) return;
+    const payload = pendingSend;
+    pendingSend = null;
+    if (menuWindow && !menuWindow.isDestroyed()) {
+      menuWindow.webContents.send('render-row-menu', payload);
+    }
+  });
+
+  return menuWindow;
 }
 
 // ======================================================================
 // Row menu
 // ======================================================================
 function showRowMenu(parent, payload) {
-    const anchor = payload && payload.anchor;
-    if (!parent || parent.isDestroyed() || !anchor) return;
+  const anchor = payload && payload.anchor;
+  if (!parent || parent.isDestroyed() || !anchor) return;
 
-    const win = ensureMenuWindow(parent);
-    hideRowMenu();
+  const win = ensureMenuWindow(parent);
+  hideRowMenu();
 
-    placementToken += 1;
-    pendingAnchor = {
-        x: Number(anchor.x) || 0,
-        y: Number(anchor.y) || 0,
-        width: Number(anchor.width) || 0,
-        height: Number(anchor.height) || 0,
-    };
+  placementToken += 1;
+  pendingAnchor = {
+    x: Number(anchor.x) || 0,
+    y: Number(anchor.y) || 0,
+    width: Number(anchor.width) || 0,
+    height: Number(anchor.height) || 0,
+  };
 
-    const message = {
-        items: Array.isArray(payload.items) ? payload.items : [],
-        theme: payload.theme === 'dark' ? 'dark' : 'light',
-        token: placementToken,
-    };
+  const message = {
+    items: Array.isArray(payload.items) ? payload.items : [],
+    theme: payload.theme === 'dark' ? 'dark' : 'light',
+    token: placementToken,
+  };
 
-    if (win.webContents.isLoading()) {
-        pendingSend = message;
-    } else {
-        win.webContents.send('render-row-menu', message);
-    }
+  if (win.webContents.isLoading()) {
+    pendingSend = message;
+  } else {
+    win.webContents.send('render-row-menu', message);
+  }
 }
 
 function placeAndShowRowMenu(size) {
-    if (!menuWindow || menuWindow.isDestroyed()) return;
-    if (!parentWindow || parentWindow.isDestroyed()) return;
-    if (!pendingAnchor || !size) return;
-    // A menu dismissed while measuring must not appear afterwards.
-    if (size.token !== placementToken) return;
+  if (!menuWindow || menuWindow.isDestroyed()) return;
+  if (!parentWindow || parentWindow.isDestroyed()) return;
+  if (!pendingAnchor || !size) return;
+  // A menu dismissed while measuring must not appear afterwards.
+  if (size.token !== placementToken) return;
 
-    const rawInset = size.inset || {};
-    const inset = {
-        top: clamp(Math.ceil(rawInset.top || 0), 0, MAX_INSET),
-        right: clamp(Math.ceil(rawInset.right || 0), 0, MAX_INSET),
-        bottom: clamp(Math.ceil(rawInset.bottom || 0), 0, MAX_INSET),
-        left: clamp(Math.ceil(rawInset.left || 0), 0, MAX_INSET),
-    };
+  const rawInset = size.inset || {};
+  const inset = {
+    top: clamp(Math.ceil(rawInset.top || 0), 0, MAX_INSET),
+    right: clamp(Math.ceil(rawInset.right || 0), 0, MAX_INSET),
+    bottom: clamp(Math.ceil(rawInset.bottom || 0), 0, MAX_INSET),
+    left: clamp(Math.ceil(rawInset.left || 0), 0, MAX_INSET),
+  };
 
-    const windowWidth = clamp(Math.ceil(size.width || 0), MIN_WIDTH, MAX_WIDTH) + inset.left + inset.right;
-    const windowHeight = Math.max(1, Math.ceil(size.height || 0)) + inset.top + inset.bottom;
+  const windowWidth =
+    clamp(Math.ceil(size.width || 0), MIN_WIDTH, MAX_WIDTH) +
+    inset.left +
+    inset.right;
+  const windowHeight =
+    Math.max(1, Math.ceil(size.height || 0)) + inset.top + inset.bottom;
 
-    // Placement works on the visual menu; the inset is transparent shadow padding.
-    const visualWidth = windowWidth - inset.left - inset.right;
-    const visualHeight = windowHeight - inset.top - inset.bottom;
+  // Placement works on the visual menu; the inset is transparent shadow padding.
+  const visualWidth = windowWidth - inset.left - inset.right;
+  const visualHeight = windowHeight - inset.top - inset.bottom;
 
-    const content = parentWindow.getContentBounds();
-    const anchorScreen = {
-        left: content.x + pendingAnchor.x,
-        top: content.y + pendingAnchor.y,
-        bottom: content.y + pendingAnchor.y + pendingAnchor.height,
-    };
+  const content = parentWindow.getContentBounds();
+  const anchorScreen = {
+    left: content.x + pendingAnchor.x,
+    top: content.y + pendingAnchor.y,
+    bottom: content.y + pendingAnchor.y + pendingAnchor.height,
+  };
 
-    const workArea = screen.getDisplayNearestPoint({
-        x: Math.round(anchorScreen.left),
-        y: Math.round(anchorScreen.top),
-    }).workArea;
+  const workArea = screen.getDisplayNearestPoint({
+    x: Math.round(anchorScreen.left),
+    y: Math.round(anchorScreen.top),
+  }).workArea;
 
-    // Flip above only when the screen runs out, using the real measured height.
-    const spaceBelow = workArea.y + workArea.height - anchorScreen.bottom;
-    const spaceAbove = anchorScreen.top - workArea.y;
-    const openUp = spaceBelow < visualHeight + ANCHOR_GAP && spaceAbove > spaceBelow;
+  // Flip above only when the screen runs out, using the real measured height.
+  const spaceBelow = workArea.y + workArea.height - anchorScreen.bottom;
+  const spaceAbove = anchorScreen.top - workArea.y;
+  const openUp =
+    spaceBelow < visualHeight + ANCHOR_GAP && spaceAbove > spaceBelow;
 
-    let visualTop = openUp
-        ? anchorScreen.top - ANCHOR_GAP - visualHeight
-        : anchorScreen.bottom + ANCHOR_GAP;
-    let visualLeft = anchorScreen.left;
+  let visualTop = openUp
+    ? anchorScreen.top - ANCHOR_GAP - visualHeight
+    : anchorScreen.bottom + ANCHOR_GAP;
+  let visualLeft = anchorScreen.left;
 
-    // Clamped to the screen, not the app window: overflowing the app window is the point.
-    visualLeft = clamp(visualLeft, workArea.x, workArea.x + workArea.width - visualWidth);
-    visualTop = clamp(visualTop, workArea.y, workArea.y + workArea.height - visualHeight);
+  // Clamped to the screen, not the app window: overflowing the app window is the point.
+  visualLeft = clamp(
+    visualLeft,
+    workArea.x,
+    workArea.x + workArea.width - visualWidth,
+  );
+  visualTop = clamp(
+    visualTop,
+    workArea.y,
+    workArea.y + workArea.height - visualHeight,
+  );
 
-    menuWindow.setBounds({
-        x: Math.round(visualLeft - inset.left),
-        y: Math.round(visualTop - inset.top),
-        width: windowWidth,
-        height: windowHeight,
-    }, false);
+  menuWindow.setBounds(
+    {
+      x: Math.round(visualLeft - inset.left),
+      y: Math.round(visualTop - inset.top),
+      width: windowWidth,
+      height: windowHeight,
+    },
+    false,
+  );
 
-    menuWindow.setOpacity(1);
-    if (!menuWindow.isVisible()) {
-        menuWindow.showInactive();
-    }
-    visible = true;
+  menuWindow.setOpacity(1);
+  if (!menuWindow.isVisible()) {
+    menuWindow.showInactive();
+  }
+  visible = true;
 }
 
 function hideRowMenu() {
-    placementToken += 1;
-    pendingAnchor = null;
+  placementToken += 1;
+  pendingAnchor = null;
 
-    if (!menuWindow || menuWindow.isDestroyed()) return;
-    if (!visible) return;
+  if (!menuWindow || menuWindow.isDestroyed()) return;
+  if (!visible) return;
 
-    // Parked, not hidden: a hidden window produces no frames, stalling the measure handshake
-    menuWindow.setOpacity(0);
-    menuWindow.setBounds(PARKED_BOUNDS, false);
-    visible = false;
+  // Parked, not hidden: a hidden window produces no frames, stalling the measure handshake
+  menuWindow.setOpacity(0);
+  menuWindow.setBounds(PARKED_BOUNDS, false);
+  visible = false;
 }
 
 module.exports = {
-    showRowMenu,
-    placeAndShowRowMenu,
-    hideRowMenu,
+  showRowMenu,
+  placeAndShowRowMenu,
+  hideRowMenu,
 };

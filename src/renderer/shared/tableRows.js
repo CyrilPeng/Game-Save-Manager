@@ -1,30 +1,47 @@
 export function setIcon(row, iconName, show) {
-    const titleCell = row.querySelector('th[scope="row"]');
-    if (!titleCell) return;
+  const titleCell = row.querySelector('th[scope="row"]');
+  if (!titleCell) return;
 
-    const iconSpan = titleCell.querySelector(`span[data-icon="${iconName}"]`);
-    if (iconSpan) {
-        iconSpan.classList.toggle('hidden', !show);
-    }
+  const iconSpan = titleCell.querySelector(`span[data-icon="${iconName}"]`);
+  if (iconSpan) {
+    iconSpan.classList.toggle('hidden', !show);
+  }
 }
 
 export function getPlatformIcon(platform, iconMap) {
-    return iconMap[platform] || '';
+  return iconMap[platform] || '';
 }
 
 export function formatSize(sizeInBytes) {
-    if (sizeInBytes === 0) return '0 B';
-    const i = Math.floor(Math.log(sizeInBytes) / Math.log(1024));
-    return (sizeInBytes / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i];
+  if (sizeInBytes === 0) return '0 B';
+  const i = Math.floor(Math.log(sizeInBytes) / Math.log(1024));
+  return (
+    (sizeInBytes / Math.pow(1024, i)).toFixed(2) * 1 +
+    ' ' +
+    ['B', 'KB', 'MB', 'GB', 'TB'][i]
+  );
 }
 
 export { platformOrder } from './sorting.js';
 
-export function createBackupTableRow(gameTitle, platformIcons, backupSize, newestBackupTime, wikiPageId) {
-    const row = document.createElement('tr');
-    row.setAttribute('data-wiki-id', wikiPageId);
-    row.classList.add('bg-white', 'border-b', 'dark:bg-gray-800', 'dark:border-gray-700', 'hover:bg-gray-50', 'dark:hover:bg-gray-600');
-    row.innerHTML = `
+export function createBackupTableRow(
+  gameTitle,
+  platformIcons,
+  backupSize,
+  newestBackupTime,
+  wikiPageId,
+) {
+  const row = document.createElement('tr');
+  row.setAttribute('data-wiki-id', wikiPageId);
+  row.classList.add(
+    'bg-white',
+    'border-b',
+    'dark:bg-gray-800',
+    'dark:border-gray-700',
+    'hover:bg-gray-50',
+    'dark:hover:bg-gray-600',
+  );
+  row.innerHTML = `
         <td class="py-4 pl-4">
             <div class="flex items-center">
                 <input type="checkbox" class="row-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:outline-hidden dark:bg-gray-700 dark:border-gray-600">
@@ -55,16 +72,29 @@ export function createBackupTableRow(gameTitle, platformIcons, backupSize, newes
             </button>
         </td>
     `;
-    row.querySelector('.game-title-text').textContent = gameTitle;
-    row.querySelector('.newest-backup-time').textContent = newestBackupTime;
-    return row;
+  row.querySelector('.game-title-text').textContent = gameTitle;
+  row.querySelector('.newest-backup-time').textContent = newestBackupTime;
+  return row;
 }
 
-export function createRestoreTableRow(gameTitle, backupCount, backupSize, newestBackupTime, wikiPageId) {
-    const row = document.createElement('tr');
-    row.setAttribute('data-wiki-id', wikiPageId);
-    row.classList.add('bg-white', 'border-b', 'dark:bg-gray-800', 'dark:border-gray-700', 'hover:bg-gray-50', 'dark:hover:bg-gray-600');
-    row.innerHTML = `
+export function createRestoreTableRow(
+  gameTitle,
+  backupCount,
+  backupSize,
+  newestBackupTime,
+  wikiPageId,
+) {
+  const row = document.createElement('tr');
+  row.setAttribute('data-wiki-id', wikiPageId);
+  row.classList.add(
+    'bg-white',
+    'border-b',
+    'dark:bg-gray-800',
+    'dark:border-gray-700',
+    'hover:bg-gray-50',
+    'dark:hover:bg-gray-600',
+  );
+  row.innerHTML = `
         <td class="py-4 pl-4">
             <div class="flex items-center">
                 <input type="checkbox" class="row-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:outline-hidden dark:bg-gray-700 dark:border-gray-600">
@@ -95,8 +125,7 @@ export function createRestoreTableRow(gameTitle, backupCount, backupSize, newest
             </button>
         </td>
     `;
-    row.querySelector('.game-title-text').textContent = gameTitle;
-    row.querySelector('.newest-backup-time').textContent = newestBackupTime;
-    return row;
+  row.querySelector('.game-title-text').textContent = gameTitle;
+  row.querySelector('.newest-backup-time').textContent = newestBackupTime;
+  return row;
 }
-

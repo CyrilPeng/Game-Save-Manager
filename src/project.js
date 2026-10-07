@@ -5,5 +5,6 @@ module.exports = Object.freeze({
   repository: 'CyrilPeng/Game-Save-Manager',
   repositoryUrl: 'https://github.com/CyrilPeng/Game-Save-Manager',
   releasesUrl: 'https://github.com/CyrilPeng/Game-Save-Manager/releases',
-  releaseApiUrl: 'https://api.github.com/repos/CyrilPeng/Game-Save-Manager/releases',
+  releaseApiUrl:
+    'https://api.github.com/repos/CyrilPeng/Game-Save-Manager/releases',
 });

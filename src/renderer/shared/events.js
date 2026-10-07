@@ -6,26 +6,28 @@ import { showAccountModal } from './accounts.js';
 window.api.send('load-theme');
 
 window.api.receive('apply-theme', (theme) => {
-    changeTheme(theme);
+  changeTheme(theme);
 });
 
 window.api.receive('show-alert', (type, message, modalContent) => {
-    showAlert(type, message, modalContent);
+  showAlert(type, message, modalContent);
 });
 
 window.api.receive('open-export-modal', () => {
-    showExportModal();
+  showExportModal();
 });
 
 window.api.receive('open-import-modal', (gsmPath) => {
-    showImportModal(gsmPath);
+  showImportModal(gsmPath);
 });
 
-window.api.receive('update-progress', (progressId, progressTitle, percentage) => {
+window.api.receive(
+  'update-progress',
+  (progressId, progressTitle, percentage) => {
     updateProgress(progressId, progressTitle, percentage);
-});
+  },
+);
 
 window.api.receive('view_account_ids', () => {
-    showAccountModal();
+  showAccountModal();
 });
-

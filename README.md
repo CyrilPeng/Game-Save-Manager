@@ -35,7 +35,6 @@ Windows 游戏存档管理器，提供本地版本备份、WebDAV / S3 云端备
 
 需要 Windows x64、Node.js 24、npm 和 Git。数据库已包含在仓库，不需要外部 Automation 项目或私有配置。
 
-
 ```bash
 git clone https://github.com/CyrilPeng/Game-Save-Manager.git
 cd Game-Save-Manager
@@ -51,6 +50,12 @@ npm start
 | npm run test:electron | 真实 Electron、SQLite、7-Zip、WebDAV 的隔离集成测试 |
 | npm run build | 编译应用 |
 | npm run package | 生成未安装的应用目录 |
+| npm run test:app / test:packaged | 验证生产入口、页面、备份恢复及 ASAR 原生依赖 |
+| npm run lint / format:check | 检查错误与代码格式 |
+| npm run verify:resources | 校验随应用提供的数据库 |
+| npm run dist | 生成 Windows x64 安装包，不自动发布 |
+
+目录职责、测试边界及发行步骤见 [开发与维护](./CONTRIBUTING.md)。
 
 ## 反馈与贡献
 

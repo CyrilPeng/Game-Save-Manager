@@ -1,137 +1,157 @@
-import { operationStartCheck, updateTranslations, showInfoModal } from '../../shared/utility.js';
+import {
+  operationStartCheck,
+  updateTranslations,
+  showInfoModal,
+} from '../../shared/utility.js';
 
 let lastSavedEntries = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    setupCustomPage();
+  setupCustomPage();
 });
 
 // ======================================================================
 // Page setup
 // ======================================================================
 function setupCustomPage() {
-    const addGameButton = document.querySelector('#custom-add-game');
-    const saveAllButton = document.querySelector('#custom-save-all');
-    const pathSyntaxButton = document.querySelector('#custom-view-path-syntax');
-    const pathSyntaxGuide = document.querySelector('#path-syntax-guide');
-    const pathSyntaxGuideClose = document.querySelector('#path-syntax-guide-close');
-    const modalOverlay = document.getElementById('modal-overlay');
+  const addGameButton = document.querySelector('#custom-add-game');
+  const saveAllButton = document.querySelector('#custom-save-all');
+  const pathSyntaxButton = document.querySelector('#custom-view-path-syntax');
+  const pathSyntaxGuide = document.querySelector('#path-syntax-guide');
+  const pathSyntaxGuideClose = document.querySelector(
+    '#path-syntax-guide-close',
+  );
+  const modalOverlay = document.getElementById('modal-overlay');
 
-    addGameButton.addEventListener('click', async () => {
-        const allTitles = document.querySelectorAll('.custom-entry-title');
-        const foundEmptyEntry = Array.from(allTitles).some(title => {
-            if (!title.innerText.trim()) {
-                const closestEntry = title.closest('.custom-entry');
-                const renameMode = closestEntry.querySelector('.rename-mode');
-                renameMode.classList.remove('hidden');
-                renameMode.classList.add('flex');
-                closestEntry.querySelector('.custom-entry-rename').classList.add('hidden');
-                closestEntry.querySelector('.custom-entry-delete').classList.add('hidden');
-                title.classList.add('hidden');
-                closestEntry.querySelector('.custom-entry-title-input').focus();
-                return true;
-            }
-            return false;
-        });
-
-        if (!foundEmptyEntry) {
-            await addTemplate();
-        }
+  addGameButton.addEventListener('click', async () => {
+    const allTitles = document.querySelectorAll('.custom-entry-title');
+    const foundEmptyEntry = Array.from(allTitles).some((title) => {
+      if (!title.innerText.trim()) {
+        const closestEntry = title.closest('.custom-entry');
+        const renameMode = closestEntry.querySelector('.rename-mode');
+        renameMode.classList.remove('hidden');
+        renameMode.classList.add('flex');
+        closestEntry
+          .querySelector('.custom-entry-rename')
+          .classList.add('hidden');
+        closestEntry
+          .querySelector('.custom-entry-delete')
+          .classList.add('hidden');
+        title.classList.add('hidden');
+        closestEntry.querySelector('.custom-entry-title-input').focus();
+        return true;
+      }
+      return false;
     });
 
-    saveAllButton.addEventListener('click', async () => {
-        const start = await operationStartCheck('save-custom');
-        if (start) await saveEntriesToJson(saveAllButton);
-    });
+    if (!foundEmptyEntry) {
+      await addTemplate();
+    }
+  });
 
-    pathSyntaxButton.addEventListener('click', () => {
-        modalOverlay.classList.remove('hidden');
-        pathSyntaxGuide.classList.remove('hidden');
-    });
+  saveAllButton.addEventListener('click', async () => {
+    const start = await operationStartCheck('save-custom');
+    if (start) await saveEntriesToJson(saveAllButton);
+  });
 
-    pathSyntaxGuide.addEventListener('click', (event) => {
-        if (event.target.matches('i.fa-copy')) {
-            const icon = event.target;
-            const placeholderText = icon.parentElement.textContent.trim();
+  pathSyntaxButton.addEventListener('click', () => {
+    modalOverlay.classList.remove('hidden');
+    pathSyntaxGuide.classList.remove('hidden');
+  });
 
-            if (placeholderText) {
-                navigator.clipboard.writeText(placeholderText).then(() => {
-                    const originalClass = icon.className;
-                    icon.className = 'fa-solid fa-check mr-2 text-green-500';
+  pathSyntaxGuide.addEventListener('click', (event) => {
+    if (event.target.matches('i.fa-copy')) {
+      const icon = event.target;
+      const placeholderText = icon.parentElement.textContent.trim();
 
-                    setTimeout(() => {
-                        icon.className = originalClass;
-                    }, 1500);
+      if (placeholderText) {
+        navigator.clipboard
+          .writeText(placeholderText)
+          .then(() => {
+            const originalClass = icon.className;
+            icon.className = 'fa-solid fa-check mr-2 text-green-500';
 
-                }).catch(err => {
-                    console.error('Failed to copy text: ', err);
-                });
-            }
-        }
-    });
+            setTimeout(() => {
+              icon.className = originalClass;
+            }, 1500);
+          })
+          .catch((err) => {
+            console.error('Failed to copy text: ', err);
+          });
+      }
+    }
+  });
 
-    pathSyntaxGuideClose.addEventListener('click', () => {
-        modalOverlay.classList.add('hidden');
-        pathSyntaxGuide.classList.add('hidden');
-    });
+  pathSyntaxGuideClose.addEventListener('click', () => {
+    modalOverlay.classList.add('hidden');
+    pathSyntaxGuide.classList.add('hidden');
+  });
 
-    loadEntriesFromJson();
+  loadEntriesFromJson();
 }
 
 async function generateUniqueId() {
-    return window.api.invoke('get-uuid');
+  return window.api.invoke('get-uuid');
 }
 
 // Collect current entries from the UI
 async function getCurrentEntries() {
-    const allEntries = document.querySelectorAll('.custom-entry');
-    const entriesArray = [];
-    const platform = await window.api.invoke('get-platform');
+  const allEntries = document.querySelectorAll('.custom-entry');
+  const entriesArray = [];
+  const platform = await window.api.invoke('get-platform');
 
-    allEntries.forEach(entry => {
-        const entryTitle = entry.querySelector('.custom-entry-title').innerText.trim();
-        const collapsedRows = entry.querySelectorAll('.collapsed-row');
-        const wikiId = entry.dataset.wikiId;
-        const installFolderName = entry.querySelector('.folder-name-input').value.trim();
-        const saveLocations = {
-            win: [],
-            reg: [],
-            mac: [],
-            linux: []
-        };
+  allEntries.forEach((entry) => {
+    const entryTitle = entry
+      .querySelector('.custom-entry-title')
+      .innerText.trim();
+    const collapsedRows = entry.querySelectorAll('.collapsed-row');
+    const wikiId = entry.dataset.wikiId;
+    const installFolderName = entry
+      .querySelector('.folder-name-input')
+      .value.trim();
+    const saveLocations = {
+      win: [],
+      reg: [],
+      mac: [],
+      linux: [],
+    };
 
-        if (!entryTitle) {
-            return;
+    if (!entryTitle) {
+      return;
+    }
+
+    // Collect all paths in the collapsed content
+    collapsedRows.forEach((row) => {
+      const backupType = row.querySelector(
+        '.custom-backup-type-dropdown',
+      ).value;
+      const path = row.querySelector('.custom-path-select-input').value.trim();
+
+      if (path) {
+        if (backupType === 'registry') {
+          saveLocations.reg.push({ template: path, type: null });
+        } else {
+          saveLocations[platform].push({ template: path, type: backupType });
         }
-
-        // Collect all paths in the collapsed content
-        collapsedRows.forEach(row => {
-            const backupType = row.querySelector('.custom-backup-type-dropdown').value;
-            const path = row.querySelector('.custom-path-select-input').value.trim();
-
-            if (path) {
-                if (backupType === 'registry') {
-                    saveLocations.reg.push({ template: path, type: null });
-                } else {
-                    saveLocations[platform].push({ template: path, type: backupType });
-                }
-            }
-        });
-
-        const hasPaths = Object.values(saveLocations).some(locationArray => locationArray.length > 0);
-        if (hasPaths) {
-            const gameObject = {
-                title: entryTitle,
-                wiki_page_id: wikiId,
-                install_folder: installFolderName,
-                save_location: saveLocations
-            };
-
-            entriesArray.push(gameObject);
-        }
+      }
     });
 
-    return entriesArray;
+    const hasPaths = Object.values(saveLocations).some(
+      (locationArray) => locationArray.length > 0,
+    );
+    if (hasPaths) {
+      const gameObject = {
+        title: entryTitle,
+        wiki_page_id: wikiId,
+        install_folder: installFolderName,
+        save_location: saveLocations,
+      };
+
+      entriesArray.push(gameObject);
+    }
+  });
+
+  return entriesArray;
 }
 
 // ======================================================================
@@ -139,28 +159,28 @@ async function getCurrentEntries() {
 // ======================================================================
 // Function to toggle entry expanded/collapsed state
 function toggleEntry(clickedEntry) {
-    const allEntries = document.querySelectorAll('.custom-entry');
+  const allEntries = document.querySelectorAll('.custom-entry');
 
-    allEntries.forEach(entry => {
-        const content = entry.querySelector('.collapsed-content');
-        const buttonSvg = entry.querySelector('.custom-entry-dropdown');
+  allEntries.forEach((entry) => {
+    const content = entry.querySelector('.collapsed-content');
+    const buttonSvg = entry.querySelector('.custom-entry-dropdown');
 
-        if (entry === clickedEntry) {
-            content.classList.toggle('hidden');
-            buttonSvg.classList.toggle('rotate-180');
-        } else {
-            content.classList.add('hidden');
-            buttonSvg.classList.remove('rotate-180');
-        }
-    });
+    if (entry === clickedEntry) {
+      content.classList.toggle('hidden');
+      buttonSvg.classList.toggle('rotate-180');
+    } else {
+      content.classList.add('hidden');
+      buttonSvg.classList.remove('rotate-180');
+    }
+  });
 }
 
 function updateCustomEntryStyles() {
-    updateTranslations(document.querySelector("#custom"));
+  updateTranslations(document.querySelector('#custom'));
 }
 
 function createCustomEntry() {
-    return `
+  return `
         <div class="custom-entry flex flex-col bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-2 mr-2 overflow-hidden">
             <div class="custom-entry-header flex items-center justify-between w-full px-5 py-4 font-medium text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150">
                 <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -208,7 +228,7 @@ function createCustomEntry() {
 }
 
 function createCollapsedRow() {
-    return `
+  return `
         <div class="collapsed-row flex items-center gap-2 mb-3 px-5">
             <select class="custom-backup-type-dropdown shrink-0 w-24 bg-white border border-gray-300 text-gray-900 text-sm rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 <option value="file" data-i18n="custom.file" class="text-content">File</option>
@@ -231,249 +251,261 @@ function createCollapsedRow() {
 }
 
 function addCollapsedRow(entry) {
-    const collapsedRowsContainer = entry.querySelector('.collapsed-rows');
-    collapsedRowsContainer.insertAdjacentHTML('beforeend', createCollapsedRow());
+  const collapsedRowsContainer = entry.querySelector('.collapsed-rows');
+  collapsedRowsContainer.insertAdjacentHTML('beforeend', createCollapsedRow());
 
-    const newRow = collapsedRowsContainer.lastElementChild;
+  const newRow = collapsedRowsContainer.lastElementChild;
 
-    // Listener for dropdown change
-    const dropDown = newRow.querySelector('.custom-backup-type-dropdown');
-    const pathInput = newRow.querySelector('.custom-path-select-input');
-    dropDown.addEventListener('change', () => {
-        pathInput.value = '';
-    });
+  // Listener for dropdown change
+  const dropDown = newRow.querySelector('.custom-backup-type-dropdown');
+  const pathInput = newRow.querySelector('.custom-path-select-input');
+  dropDown.addEventListener('change', () => {
+    pathInput.value = '';
+  });
 
-    // Listener for add path button
-    const addPathButton = newRow.querySelector('.custom-path-select-button');
-    addPathButton.addEventListener('click', async () => {
-        const result = await window.api.invoke('select-path', dropDown.value);
+  // Listener for add path button
+  const addPathButton = newRow.querySelector('.custom-path-select-button');
+  addPathButton.addEventListener('click', async () => {
+    const result = await window.api.invoke('select-path', dropDown.value);
 
-        if (result) {
-            pathInput.value = result;
-        }
-    });
+    if (result) {
+      pathInput.value = result;
+    }
+  });
 
-    // Listener for delete path row button
-    const deletePathButton = newRow.querySelector('.custom-delete-collapsed-row');
-    deletePathButton.addEventListener('click', () => {
-        newRow.remove();
-    });
+  // Listener for delete path row button
+  const deletePathButton = newRow.querySelector('.custom-delete-collapsed-row');
+  deletePathButton.addEventListener('click', () => {
+    newRow.remove();
+  });
 
-    updateTranslations(collapsedRowsContainer);
+  updateTranslations(collapsedRowsContainer);
 }
 
 async function addTemplate(renameTitleFocus = true, wikiId = null) {
-    const customTabContent = document.querySelector('#custom-content');
+  const customTabContent = document.querySelector('#custom-content');
 
-    customTabContent.insertAdjacentHTML('beforeend', createCustomEntry());
-    const newEntry = customTabContent.lastElementChild;
+  customTabContent.insertAdjacentHTML('beforeend', createCustomEntry());
+  const newEntry = customTabContent.lastElementChild;
 
-    if (!wikiId) {
-        wikiId = await generateUniqueId();
-    }
-    newEntry.dataset.wikiId = wikiId;
+  if (!wikiId) {
+    wikiId = await generateUniqueId();
+  }
+  newEntry.dataset.wikiId = wikiId;
 
-    const entryHeader = newEntry.querySelector('.custom-entry-header');
-    const entryTitle = newEntry.querySelector('.custom-entry-title');
-    const renameMode = newEntry.querySelector('.rename-mode');
-    const folderToggle = newEntry.querySelector('.game-install-folder-toggle');
-    const folderInput = newEntry.querySelector('.folder-name-input');
-    const titleInput = newEntry.querySelector('.custom-entry-title-input');
-    const renameButton = newEntry.querySelector('.custom-entry-rename');
-    const confirmRenameButton = newEntry.querySelector('.custom-entry-confirm-rename');
-    const deleteButton = newEntry.querySelector('.custom-entry-delete');
+  const entryHeader = newEntry.querySelector('.custom-entry-header');
+  const entryTitle = newEntry.querySelector('.custom-entry-title');
+  const renameMode = newEntry.querySelector('.rename-mode');
+  const folderToggle = newEntry.querySelector('.game-install-folder-toggle');
+  const folderInput = newEntry.querySelector('.folder-name-input');
+  const titleInput = newEntry.querySelector('.custom-entry-title-input');
+  const renameButton = newEntry.querySelector('.custom-entry-rename');
+  const confirmRenameButton = newEntry.querySelector(
+    '.custom-entry-confirm-rename',
+  );
+  const deleteButton = newEntry.querySelector('.custom-entry-delete');
 
-    let skipNextHeaderClick = false;
+  let skipNextHeaderClick = false;
 
-    entryHeader.addEventListener('click', (e) => {
-        // Skip if we just confirmed a rename
-        if (skipNextHeaderClick) {
-            skipNextHeaderClick = false;
-            return;
-        }
-
-        // Don't toggle if clicking on buttons or input
-        if (e.target.closest('.custom-entry-rename') ||
-            e.target.closest('.custom-entry-delete') ||
-            e.target.closest('.rename-mode')) {
-            return;
-        }
-
-        if (!entryTitle.innerHTML.trim()) {
-            renameEntry();
-        } else {
-            toggleEntry(newEntry);
-        }
-    });
-
-    // Handle game install folder toggle
-    folderToggle.addEventListener('change', () => {
-        folderInput.classList.toggle('hidden', !folderToggle.checked);
-    });
-
-    // Rename the title
-    const renameEntry = () => {
-        renameMode.classList.remove('hidden');
-        renameMode.classList.add('flex');
-        entryTitle.classList.add('hidden');
-        renameButton.classList.add('hidden');
-        deleteButton.classList.add('hidden');
-        titleInput.value = entryTitle.innerText;
-        titleInput.focus();
-        titleInput.select();
-    }
-    renameButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        renameEntry();
-    });
-
-    // Confirm rename
-    const finishRename = () => {
-        const newTitle = titleInput.value.trim();
-        if (newTitle) {
-            entryTitle.innerText = newTitle;
-        }
-        renameMode.classList.add('hidden');
-        renameMode.classList.remove('flex');
-        entryTitle.classList.remove('hidden');
-        renameButton.classList.remove('hidden');
-        deleteButton.classList.remove('hidden');
-
-        // Always expand the entry after renaming
-        const collapsedContent = newEntry.querySelector('.collapsed-content');
-        if (entryTitle.innerText && collapsedContent.classList.contains('hidden')) {
-            toggleEntry(newEntry);
-        }
+  entryHeader.addEventListener('click', (e) => {
+    // Skip if we just confirmed a rename
+    if (skipNextHeaderClick) {
+      skipNextHeaderClick = false;
+      return;
     }
 
-    // Handle rename confirmation
-    titleInput.addEventListener('blur', () => {
-        finishRename();
-    });
-    titleInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            titleInput.blur();
-        }
-    });
-    confirmRenameButton.addEventListener('mousedown', (e) => {
-        skipNextHeaderClick = true;
-        e.stopPropagation();
-    });
-    confirmRenameButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        titleInput.blur();
-    });
-
-    // Handle delete button
-    deleteButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        newEntry.remove();
-    });
-
-    // Handle add path button
-    const addPathButton = newEntry.querySelector('.custom-add-path');
-    addPathButton.addEventListener('click', () => {
-        addCollapsedRow(newEntry);
-    });
-
-    updateCustomEntryStyles();
-
-    // If not loaded from json
-    if (renameTitleFocus) {
-        renameEntry();
-        addCollapsedRow(newEntry);
+    // Don't toggle if clicking on buttons or input
+    if (
+      e.target.closest('.custom-entry-rename') ||
+      e.target.closest('.custom-entry-delete') ||
+      e.target.closest('.rename-mode')
+    ) {
+      return;
     }
+
+    if (!entryTitle.innerHTML.trim()) {
+      renameEntry();
+    } else {
+      toggleEntry(newEntry);
+    }
+  });
+
+  // Handle game install folder toggle
+  folderToggle.addEventListener('change', () => {
+    folderInput.classList.toggle('hidden', !folderToggle.checked);
+  });
+
+  // Rename the title
+  const renameEntry = () => {
+    renameMode.classList.remove('hidden');
+    renameMode.classList.add('flex');
+    entryTitle.classList.add('hidden');
+    renameButton.classList.add('hidden');
+    deleteButton.classList.add('hidden');
+    titleInput.value = entryTitle.innerText;
+    titleInput.focus();
+    titleInput.select();
+  };
+  renameButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    renameEntry();
+  });
+
+  // Confirm rename
+  const finishRename = () => {
+    const newTitle = titleInput.value.trim();
+    if (newTitle) {
+      entryTitle.innerText = newTitle;
+    }
+    renameMode.classList.add('hidden');
+    renameMode.classList.remove('flex');
+    entryTitle.classList.remove('hidden');
+    renameButton.classList.remove('hidden');
+    deleteButton.classList.remove('hidden');
+
+    // Always expand the entry after renaming
+    const collapsedContent = newEntry.querySelector('.collapsed-content');
+    if (entryTitle.innerText && collapsedContent.classList.contains('hidden')) {
+      toggleEntry(newEntry);
+    }
+  };
+
+  // Handle rename confirmation
+  titleInput.addEventListener('blur', () => {
+    finishRename();
+  });
+  titleInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+      titleInput.blur();
+    }
+  });
+  confirmRenameButton.addEventListener('mousedown', (e) => {
+    skipNextHeaderClick = true;
+    e.stopPropagation();
+  });
+  confirmRenameButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    titleInput.blur();
+  });
+
+  // Handle delete button
+  deleteButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    newEntry.remove();
+  });
+
+  // Handle add path button
+  const addPathButton = newEntry.querySelector('.custom-add-path');
+  addPathButton.addEventListener('click', () => {
+    addCollapsedRow(newEntry);
+  });
+
+  updateCustomEntryStyles();
+
+  // If not loaded from json
+  if (renameTitleFocus) {
+    renameEntry();
+    addCollapsedRow(newEntry);
+  }
 }
 
 // ======================================================================
 // Persistence
 // ======================================================================
 async function saveEntriesToJson(saveAllButton) {
-    saveAllButton.disabled = true;
-    saveAllButton.classList.add('cursor-not-allowed');
+  saveAllButton.disabled = true;
+  saveAllButton.classList.add('cursor-not-allowed');
 
-    try {
-        const entriesArray = await getCurrentEntries();
-        // UUIDs identify custom games; independent devices can use the same display name.
-        const saved = await window.api.invoke('save-custom-entries', entriesArray);
-        if (saved === true) lastSavedEntries = entriesArray;
-    } finally {
-        saveAllButton.disabled = false;
-        saveAllButton.classList.remove('cursor-not-allowed');
-    }
+  try {
+    const entriesArray = await getCurrentEntries();
+    // UUIDs identify custom games; independent devices can use the same display name.
+    const saved = await window.api.invoke('save-custom-entries', entriesArray);
+    if (saved === true) lastSavedEntries = entriesArray;
+  } finally {
+    saveAllButton.disabled = false;
+    saveAllButton.classList.remove('cursor-not-allowed');
+  }
 }
 
 async function loadEntriesFromJson() {
-    const jsonEntries = await window.api.invoke('load-custom-entries');
-    const platform = await window.api.invoke('get-platform');
+  const jsonEntries = await window.api.invoke('load-custom-entries');
+  const platform = await window.api.invoke('get-platform');
 
-    const customTabContent = document.querySelector('#custom-content');
-    customTabContent.innerHTML = '';
+  const customTabContent = document.querySelector('#custom-content');
+  customTabContent.innerHTML = '';
 
-    for (const gameEntry of jsonEntries) {
-        await addTemplate(false, gameEntry.wiki_page_id);
-        const newEntry = document.querySelector('.custom-entry:last-child');
+  for (const gameEntry of jsonEntries) {
+    await addTemplate(false, gameEntry.wiki_page_id);
+    const newEntry = document.querySelector('.custom-entry:last-child');
 
-        // Set the entry title
-        const entryTitleElement = newEntry.querySelector('.custom-entry-title');
-        entryTitleElement.innerText = gameEntry.title;
+    // Set the entry title
+    const entryTitleElement = newEntry.querySelector('.custom-entry-title');
+    entryTitleElement.innerText = gameEntry.title;
 
-        // Set the entry game install folder name
-        if (gameEntry.install_folder) {
-            const folderToggle = newEntry.querySelector('.game-install-folder-toggle');
-            folderToggle.checked = true;
+    // Set the entry game install folder name
+    if (gameEntry.install_folder) {
+      const folderToggle = newEntry.querySelector(
+        '.game-install-folder-toggle',
+      );
+      folderToggle.checked = true;
 
-            const folderInput = newEntry.querySelector('.folder-name-input');
-            folderInput.classList.remove('hidden');
-            folderInput.value = gameEntry.install_folder;
-        }
-
-        const collapsedRowsContainer = newEntry.querySelector('.collapsed-rows');
-
-        // Populate paths for the current platform
-        const platformPaths = gameEntry.save_location[platform];
-        platformPaths.forEach(pathObj => {
-            addCollapsedRow(newEntry);
-            const newRow = collapsedRowsContainer.lastElementChild;
-
-            // Set the path and type
-            const pathInput = newRow.querySelector('.custom-path-select-input');
-            pathInput.value = pathObj.template;
-
-            const backupTypeDropdown = newRow.querySelector('.custom-backup-type-dropdown');
-            backupTypeDropdown.value = pathObj.type;
-        });
-
-        if (platform === 'win' && gameEntry.save_location.reg) {
-            gameEntry.save_location.reg.forEach(pathObj => {
-                addCollapsedRow(newEntry);
-                const newRow = collapsedRowsContainer.lastElementChild;
-
-                // Set the registry path
-                const pathInput = newRow.querySelector('.custom-path-select-input');
-                pathInput.value = pathObj.template;
-
-                const backupTypeDropdown = newRow.querySelector('.custom-backup-type-dropdown');
-                backupTypeDropdown.value = 'registry';
-            });
-        }
+      const folderInput = newEntry.querySelector('.folder-name-input');
+      folderInput.classList.remove('hidden');
+      folderInput.value = gameEntry.install_folder;
     }
 
-    updateCustomEntryStyles();
+    const collapsedRowsContainer = newEntry.querySelector('.collapsed-rows');
 
-    // Store the loaded entries as the baseline for unsaved changes comparison
-    lastSavedEntries = jsonEntries;
+    // Populate paths for the current platform
+    const platformPaths = gameEntry.save_location[platform];
+    platformPaths.forEach((pathObj) => {
+      addCollapsedRow(newEntry);
+      const newRow = collapsedRowsContainer.lastElementChild;
+
+      // Set the path and type
+      const pathInput = newRow.querySelector('.custom-path-select-input');
+      pathInput.value = pathObj.template;
+
+      const backupTypeDropdown = newRow.querySelector(
+        '.custom-backup-type-dropdown',
+      );
+      backupTypeDropdown.value = pathObj.type;
+    });
+
+    if (platform === 'win' && gameEntry.save_location.reg) {
+      gameEntry.save_location.reg.forEach((pathObj) => {
+        addCollapsedRow(newEntry);
+        const newRow = collapsedRowsContainer.lastElementChild;
+
+        // Set the registry path
+        const pathInput = newRow.querySelector('.custom-path-select-input');
+        pathInput.value = pathObj.template;
+
+        const backupTypeDropdown = newRow.querySelector(
+          '.custom-backup-type-dropdown',
+        );
+        backupTypeDropdown.value = 'registry';
+      });
+    }
+  }
+
+  updateCustomEntryStyles();
+
+  // Store the loaded entries as the baseline for unsaved changes comparison
+  lastSavedEntries = jsonEntries;
 }
 window.loadEntriesFromJson = loadEntriesFromJson;
 
 export async function checkAndWarnUnsavedChanges() {
-    const currentEntries = await getCurrentEntries();
+  const currentEntries = await getCurrentEntries();
 
-    if (JSON.stringify(lastSavedEntries) !== JSON.stringify(currentEntries)) {
-        const title = await window.i18n.translate('custom.unsaved_changes_title');
-        const message = await window.i18n.translate('custom.unsaved_changes_message');
-        return showInfoModal(title, message, 'yesno');
-    }
+  if (JSON.stringify(lastSavedEntries) !== JSON.stringify(currentEntries)) {
+    const title = await window.i18n.translate('custom.unsaved_changes_title');
+    const message = await window.i18n.translate(
+      'custom.unsaved_changes_message',
+    );
+    return showInfoModal(title, message, 'yesno');
+  }
 
-    return true; // No unsaved changes, safe to proceed
+  return true; // No unsaved changes, safe to proceed
 }

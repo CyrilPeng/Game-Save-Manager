@@ -1,0 +1,9 @@
+node_modules
+dist
+test-output
+package-lock.json
+resources
+src/assets
+src/assets_export
+src/locale
+**/tailwind-output.css

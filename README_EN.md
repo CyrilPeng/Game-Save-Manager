@@ -35,7 +35,6 @@ A game-location database is bundled with the application. Updates download datab
 
 Requires Windows x64, Node.js 24, npm and Git. The repository includes the database; no separate Automation checkout or private configuration is required.
 
-
 ```bash
 git clone https://github.com/CyrilPeng/Game-Save-Manager.git
 cd Game-Save-Manager
@@ -49,6 +48,12 @@ npm start
 | npm run test:electron | Isolated integration with real Electron, SQLite, 7-Zip and WebDAV |
 | npm run build | Compile the application |
 | npm run package | Create an unpacked application directory |
+| npm run test:app / test:packaged | Test startup, pages, local backup/restore and ASAR dependencies |
+| npm run lint / format:check | Check code and formatting |
+| npm run verify:resources | Validate the bundled database |
+| npm run dist | Build a Windows x64 installer without publishing |
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for module ownership, test boundaries and release steps.
 
 ## Contributions
 

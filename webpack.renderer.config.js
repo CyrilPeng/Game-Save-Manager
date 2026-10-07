@@ -3,77 +3,69 @@ const path = require('path');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const WebpackObfuscator = require('webpack-obfuscator');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
 module.exports = {
-    mode: isProduction ? 'production' : 'development',
-    target: 'electron-renderer',
-    devtool: isProduction ? false : 'source-map',
-    entry: {
-        index: './src/renderer/pages/index/entry.js',
-        settings: './src/renderer/pages/settings/entry.js',
-        about: './src/renderer/pages/about/entry.js',
-        menu: './src/renderer/pages/menu/entry.js',
-    },
-    output: {
-        path: path.resolve(__dirname, 'dist/out/renderer'),
-        filename: 'js/[name].bundle.js',
-    },
+  mode: isProduction ? 'production' : 'development',
+  target: 'electron-renderer',
+  devtool: isProduction ? false : 'source-map',
+  entry: {
+    index: './src/renderer/pages/index/entry.js',
+    settings: './src/renderer/pages/settings/entry.js',
+    about: './src/renderer/pages/about/entry.js',
+    menu: './src/renderer/pages/menu/entry.js',
+  },
+  output: {
+    path: path.resolve(__dirname, 'dist/out/renderer'),
+    filename: 'js/[name].bundle.js',
+  },
 
-    module: {
-        rules: [
-            {
-                test: /\.js$/,
-                exclude: /node_modules/,
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: ['@babel/preset-env'],
-                    },
-                },
-            },
-            {
-                // This rule handles the compiled Tailwind CSS and Font Awesome CSS
-                test: /\.css$/,
-                use: [MiniCssExtractPlugin.loader, 'css-loader'],
-            },
-        ],
-    },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env'],
+          },
+        },
+      },
+      {
+        // This rule handles the compiled Tailwind CSS and Font Awesome CSS
+        test: /\.css$/,
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+      },
+    ],
+  },
 
-    plugins: [
-        // --- Create a new HtmlWebpackPlugin for EACH of the pages ---
-        new HtmlWebpackPlugin({
-            template: './src/renderer/pages/index/template.html',  // Path to the source HTML
-            filename: 'index.html',                 // Name of the output HTML in 'dist/out/renderer/'
-            chunks: ['index'],                      // IMPORTANT: Inject only the 'index' JavaScript bundle
-        }),
-        new HtmlWebpackPlugin({
-            template: './src/renderer/pages/settings/template.html',
-            filename: 'settings.html',
-            chunks: ['settings'],
-        }),
-        new HtmlWebpackPlugin({
-            template: './src/renderer/pages/about/template.html',
-            filename: 'about.html',
-            chunks: ['about'],
-        }),
-        new HtmlWebpackPlugin({
-            template: './src/renderer/pages/menu/template.html',
-            filename: 'menu.html',
-            chunks: ['menu'],
-        }),
+  plugins: [
+    // --- Create a new HtmlWebpackPlugin for EACH of the pages ---
+    new HtmlWebpackPlugin({
+      template: './src/renderer/pages/index/template.html', // Path to the source HTML
+      filename: 'index.html', // Name of the output HTML in 'dist/out/renderer/'
+      chunks: ['index'], // IMPORTANT: Inject only the 'index' JavaScript bundle
+    }),
+    new HtmlWebpackPlugin({
+      template: './src/renderer/pages/settings/template.html',
+      filename: 'settings.html',
+      chunks: ['settings'],
+    }),
+    new HtmlWebpackPlugin({
+      template: './src/renderer/pages/about/template.html',
+      filename: 'about.html',
+      chunks: ['about'],
+    }),
+    new HtmlWebpackPlugin({
+      template: './src/renderer/pages/menu/template.html',
+      filename: 'menu.html',
+      chunks: ['menu'],
+    }),
 
-        new MiniCssExtractPlugin({
-            filename: 'css/[name].styles.css',
-        }),
-
-        isProduction && new WebpackObfuscator({
-            compact: true,
-            selfDefending: true,
-            stringArray: true,
-            rotateStringArray: true,
-        }, []),
-    ].filter(Boolean),
+    new MiniCssExtractPlugin({
+      filename: 'css/[name].styles.css',
+    }),
+  ],
 };
