@@ -9,7 +9,9 @@
     "clean": "rimraf dist/out",
     "start": "npm run clean && npm run tailwind:build && concurrently -k -s first -n \"TAILWIND,RENDERER,MAIN,ELECTRON\" \"npm:tailwind:watch\" \"webpack --watch --config webpack.renderer.config.js --mode development\" \"webpack --watch --config webpack.main.config.js --config webpack.preload.config.js --mode development\" \"wait-on dist/out/main/main.js && electron .\"",
     "build": "npm run clean && cross-env NODE_ENV=production npm run tailwind:build && cross-env NODE_ENV=production webpack --config webpack.main.config.js --config webpack.preload.config.js --config webpack.renderer.config.js --mode production",
-    "package": "npm run build && electron-builder --dir"
+    "package": "npm run build && electron-builder --dir",
+    "test": "node --test --test-timeout=30000 tests/*.test.js",
+    "test:electron": "node tests/cloud-electron-e2e.cjs"
   },
   "build": {
     "extends": null,
@@ -104,5 +106,8 @@
     "electron-winstaller@5.4.0": true,
     "@parcel/watcher@2.5.1": true,
     "javascript-obfuscator": false
+  },
+  "engines": {
+    "node": ">=24 <25"
   }
 }
