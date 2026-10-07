@@ -58,6 +58,6 @@ gh workflow run release.yml --ref main -f ref=<commit-sha>
 gh workflow run release.yml --ref main -f ref=v3.0.0 -F publish=true
 ```
 
-构建产物 game-save-manager-windows-x64 包含安装包、blockmap、两个数据库文件、build-info.json 和 release-notes.md；构建摘要与 build-info.json 记录实际检出的 commit。Release 附带安装包、blockmap、build-info.json、database.db 和 database-manifest.json，支持该版本的数据库在线更新。发布任务会再次确认远端标签与通过测试的构建提交一致；失败后重跑会续传尚未公开的草稿，已公开版本不会被覆盖。
+构建产物 game-save-manager-windows-x64 包含安装包、blockmap、两个数据库文件、build-info.json 和 release-notes.md；构建摘要与 build-info.json 记录实际检出的 commit。Release 附带安装包、blockmap、database.db 和 database-manifest.json，支持该版本的数据库在线更新。build-info.json 仅保留在 Actions 构建产物中，不作为公开发行附件。发布任务会再次确认远端标签与通过测试的构建提交一致；失败后重跑会续传尚未公开的草稿，已公开版本不会被覆盖。
 
 阶段性工作使用中文约定式提交，例如 refactor(backup): 拆分快照索引。提交前同步更新 CHANGELOG.md：尚未归入版本的内容写在“未发布”，发行时整理为对应版本，按“新增”“修复”“维护与文档”“运行说明”分组；仅保留有实际内容的分组。GitHub Releases 使用对应版本的更新说明。合并前检查 Windows CI，并在真实存档的副本上完成一次手动备份恢复验证。

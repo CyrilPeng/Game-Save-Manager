@@ -142,7 +142,6 @@ jobs:
             "$installer.blockmap"
             "outputs/resources/database/database.db"
             "outputs/resources/database/database-manifest.json"
-            "outputs/test-output/build-info.json"
           )
           for file in "$notes" "${files[@]}"; do
             if [[ ! -s "$file" ]]; then
