@@ -1,6 +1,6 @@
 {
   "name": "game-save-manager",
-  "version": "2.2.2-beta.2",
+  "version": "3.0.0",
   "description": "游戏存档的本地版本备份、云端双备份与跨设备恢复",
   "main": "dist/out/main/main.js",
   "scripts": {
@@ -13,8 +13,8 @@
     "test": "node --test --test-timeout=30000 tests/*.test.js",
     "test:electron": "cross-env NODE_ENV=production webpack --config webpack.preload.config.js --mode production && node tests/cloud-electron-e2e.cjs",
     "lint": "eslint src tests scripts webpack.*.js *.config.cjs",
-    "format": "prettier --write src tests scripts *.config.js *.config.cjs .github/workflows",
-    "format:check": "prettier --check src tests scripts *.config.js *.config.cjs .github/workflows",
+    "format": "prettier --write src tests scripts *.config.js *.config.cjs .github/workflows README.md README_EN.md CONTRIBUTING.md CHANGELOG.md package.json .prettierrc.json",
+    "format:check": "prettier --check src tests scripts *.config.js *.config.cjs .github/workflows README.md README_EN.md CONTRIBUTING.md CHANGELOG.md package.json .prettierrc.json",
     "verify:resources": "node scripts/verify-database.cjs",
     "test:app": "node tests/app-smoke.cjs",
     "test:packaged": "node tests/app-smoke.cjs --packaged",

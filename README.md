@@ -44,16 +44,16 @@ npm start
 
 常用命令：
 
-| 命令 | 用途 |
-| --- | --- |
-| npm test | 文件、快照、恢复、云任务和权限回归 |
-| npm run test:electron | 真实 Electron、SQLite、7-Zip、WebDAV 的隔离集成测试 |
-| npm run build | 编译应用 |
-| npm run package | 生成未安装的应用目录 |
-| npm run test:app / test:packaged | 验证生产入口、页面、备份恢复及 ASAR 原生依赖 |
-| npm run lint / format:check | 检查错误与代码格式 |
-| npm run verify:resources | 校验随应用提供的数据库 |
-| npm run dist | 生成 Windows x64 安装包，不自动发布 |
+| 命令                             | 用途                                                |
+| -------------------------------- | --------------------------------------------------- |
+| npm test                         | 文件、快照、恢复、云任务和权限回归                  |
+| npm run test:electron            | 真实 Electron、SQLite、7-Zip、WebDAV 的隔离集成测试 |
+| npm run build                    | 编译应用                                            |
+| npm run package                  | 生成未安装的应用目录                                |
+| npm run test:app / test:packaged | 验证生产入口、页面、备份恢复及 ASAR 原生依赖        |
+| npm run lint / format:check      | 检查错误与代码格式                                  |
+| npm run verify:resources         | 校验随应用提供的数据库                              |
+| npm run dist                     | 生成 Windows x64 安装包，不自动发布                 |
 
 目录职责、测试边界及发行步骤见 [开发与维护](./CONTRIBUTING.md)。
 
@@ -61,7 +61,7 @@ npm start
 
 请在 [Issues](https://github.com/CyrilPeng/Game-Save-Manager/issues) 提供软件版本、Windows 版本、操作步骤和脱敏日志。云存储问题请同时提供服务类型和各项连接诊断结果，不要提交密码、令牌或真实存档。
 
-修改备份、恢复、归档或云队列时，应运行核心测试及 Electron 集成测试。提交说明使用约定式提交；版本说明集中在 GitHub Releases。
+修改备份、恢复、归档或云队列时，应运行核心测试及 Electron 集成测试。提交说明使用中文约定式提交，提交前同步更新 [更新日志](./CHANGELOG.md)；GitHub Releases 使用对应版本的更新说明。
 
 ## 许可证与来源
 

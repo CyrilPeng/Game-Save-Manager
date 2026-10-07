@@ -4,21 +4,21 @@
 
 ## 代码位置
 
-| 目录 | 职责 |
-| --- | --- |
-| src/main/app | 应用启动、窗口、菜单与状态 |
-| src/main/backup | 本地快照、恢复保护、归档、迁移与自动备份 |
-| src/main/cloud | 云仓库、持久化任务、凭据与 WebDAV / S3 提供方 |
-| src/main/games | 游戏目录、自定义条目、账号及存档路径解析 |
-| src/main/settings | 配置校验与串行写入事务 |
-| src/main/platform | 文件系统、注册表与平台路径 |
-| src/main/updates | 本仓库应用版本与数据库更新 |
-| src/main/ipc | 按业务注册通信入口 |
-| src/preload、src/shared | 页面可用接口及共享通信契约 |
-| src/renderer/pages | 四个窗口的入口、模板及页面初始化 |
-| src/renderer/features | 按功能组织的页面交互 |
-| src/renderer/shared | 表格、排序、刷新队列、弹窗、翻译与进度 |
-| resources/database | 随应用提供的数据库及校验清单 |
+| 目录                    | 职责                                          |
+| ----------------------- | --------------------------------------------- |
+| src/main/app            | 应用启动、窗口、菜单与状态                    |
+| src/main/backup         | 本地快照、恢复保护、归档、迁移与自动备份      |
+| src/main/cloud          | 云仓库、持久化任务、凭据与 WebDAV / S3 提供方 |
+| src/main/games          | 游戏目录、自定义条目、账号及存档路径解析      |
+| src/main/settings       | 配置校验与串行写入事务                        |
+| src/main/platform       | 文件系统、注册表与平台路径                    |
+| src/main/updates        | 本仓库应用版本与数据库更新                    |
+| src/main/ipc            | 按业务注册通信入口                            |
+| src/preload、src/shared | 页面可用接口及共享通信契约                    |
+| src/renderer/pages      | 四个窗口的入口、模板及页面初始化              |
+| src/renderer/features   | 按功能组织的页面交互                          |
+| src/renderer/shared     | 表格、排序、刷新队列、弹窗、翻译与进度        |
+| resources/database      | 随应用提供的数据库及校验清单                  |
 
 主入口只负责启动。IPC 入口负责请求检查及服务调用；文件写入、快照和恢复逻辑归各自服务。src/main/global.js 和少量前端公共出口用于兼容现有调用，新增业务应直接导入所属模块。
 
@@ -39,4 +39,4 @@
 
 版本号同时更新 package.json 和 package-lock.json。运行 npm run dist 生成 dist/release 下的 Windows x64 安装包；不会自动发布。GitHub 的 Build Windows installer 工作流可手动执行，产物包含安装包和两个数据库文件。发布到 Releases 时附带这两个数据库文件，才能启用该版本的数据库在线更新。
 
-阶段性工作使用中文约定式提交，例如 refactor(backup): 拆分快照索引。发行说明写在 GitHub Releases，不维护额外 changelog。合并前检查 Windows CI，并在真实存档的副本上完成一次手动备份恢复验证。
+阶段性工作使用中文约定式提交，例如 refactor(backup): 拆分快照索引。提交前同步更新 CHANGELOG.md：尚未归入版本的内容写在“未发布”，发行时整理为对应版本，按“新增”“修复”“维护与文档”“运行说明”分组；仅保留有实际内容的分组。GitHub Releases 使用对应版本的更新说明。合并前检查 Windows CI，并在真实存档的副本上完成一次手动备份恢复验证。

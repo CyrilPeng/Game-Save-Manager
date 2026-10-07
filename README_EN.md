@@ -42,16 +42,16 @@ npm ci
 npm start
 ```
 
-| Command | Purpose |
-| --- | --- |
-| npm test | Core file, snapshot, restore, cloud task and permission regression tests |
-| npm run test:electron | Isolated integration with real Electron, SQLite, 7-Zip and WebDAV |
-| npm run build | Compile the application |
-| npm run package | Create an unpacked application directory |
-| npm run test:app / test:packaged | Test startup, pages, local backup/restore and ASAR dependencies |
-| npm run lint / format:check | Check code and formatting |
-| npm run verify:resources | Validate the bundled database |
-| npm run dist | Build a Windows x64 installer without publishing |
+| Command                          | Purpose                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------ |
+| npm test                         | Core file, snapshot, restore, cloud task and permission regression tests |
+| npm run test:electron            | Isolated integration with real Electron, SQLite, 7-Zip and WebDAV        |
+| npm run build                    | Compile the application                                                  |
+| npm run package                  | Create an unpacked application directory                                 |
+| npm run test:app / test:packaged | Test startup, pages, local backup/restore and ASAR dependencies          |
+| npm run lint / format:check      | Check code and formatting                                                |
+| npm run verify:resources         | Validate the bundled database                                            |
+| npm run dist                     | Build a Windows x64 installer without publishing                         |
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for module ownership, test boundaries and release steps.
 
@@ -59,7 +59,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for module ownership, test boundaries a
 
 Use [Issues](https://github.com/CyrilPeng/Game-Save-Manager/issues) for reports. Include the application version, Windows version, reproduction steps and sanitized logs. For cloud issues, include the provider and individual diagnostic results. Never share passwords, tokens or actual saves.
 
-Changes to backups, recovery, archives or cloud queues should pass both the core and Electron integration tests. Use conventional commits. Release notes are maintained in GitHub Releases.
+Changes to backups, recovery, archives or cloud queues should pass both the core and Electron integration tests. Use conventional commits with Chinese descriptions, and update [CHANGELOG.md](./CHANGELOG.md) before committing. GitHub Releases use the notes for the matching version.
 
 ## License and origin
 
