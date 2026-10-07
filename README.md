@@ -55,7 +55,7 @@ npm start
 | npm run verify:resources         | 校验随应用提供的数据库                              |
 | npm run dist                     | 生成 Windows x64 安装包，不自动发布                 |
 
-目录职责、测试边界及发行步骤见 [开发与维护](./CONTRIBUTING.md)。
+推送 v* 标签会自动构建 Windows 安装包；也可在 Actions 的 Build Windows installer 中填写 ref，手动验证指定分支、tag 或 commit SHA。构建产物包含实际提交信息。目录职责、测试边界及发行步骤见 [开发与维护](./CONTRIBUTING.md)。
 
 ## 反馈与贡献
 
