@@ -1,6 +1,5 @@
 const nativeReg = require('native-reg');
 
-
 // ======================================================================
 // Key access
 // ======================================================================
@@ -53,7 +52,6 @@ function getRegistryValue(registryPath, valueName) {
         return value === null || value === undefined ? '' : String(value);
     }, '');
 }
-
 
 // ======================================================================
 // Export size

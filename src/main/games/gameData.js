@@ -6,8 +6,8 @@ const glob = require('glob');
 const vdf = require('vdf-parser');
 const yaml = require('js-yaml');
 
-const { getRegistryValue } = require('./registry');
-const { getLatestModificationTime, placeholder_mapping } = require('./global');
+const { getRegistryValue } = require('../platform/registry');
+const { getLatestModificationTime, placeholder_mapping } = require('../global');
 
 const STEAM_ACCOUNT_ID_MASK = 0xFFFFFFFFn;
 

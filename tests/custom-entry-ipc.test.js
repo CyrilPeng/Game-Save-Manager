@@ -3,26 +3,19 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
-const vm = require('node:vm');
 const { randomUUID } = require('node:crypto');
-const customGameStore = require('../src/main/customGameStore');
-const backupCoordinator = require('../src/main/backupCoordinator');
+const customGameStore = require('../src/main/games/customGameStore');
+const backupCoordinator = require('../src/main/backup/backupCoordinator');
 
 async function harness(t) {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'gsm-custom-ipc-'));
     t.after(() => fs.rm(root, { recursive: true, force: true }));
     const handlers = new Map(), messages = [];
     const settings = { backupPath: root };
-    const source = await fs.readFile(path.join(__dirname, '../src/main/main.js'), 'utf8');
-    const start = source.indexOf("ipcMain.handle('save-custom-entries'");
-    const end = source.indexOf("ipcMain.handle('get-account-data'", start);
-    assert.ok(start > 0 && end > start);
-    vm.runInNewContext(source.slice(start, end), {
-        ipcMain: { handle: (name, callback) => handlers.set(name, callback) },
-        customGameStore, backupCoordinator, customEntryBaselines: new WeakMap(),
-        getSettings: () => settings,
+    require('../src/main/ipc/customEntries').registerCustomEntriesIpc({ handle: (name, callback) => handlers.set(name, callback) }, {
+        customGameStore, backupCoordinator, getSettings: () => settings,
         getMainWin: () => ({ webContents: { send: (...args) => messages.push(args) } }),
-        i18next: { t: key => key }, console: { error() {} },
+        i18next: { t: key => key },
     });
     const event = { sender: {} };
     return { root, settings, messages, load: () => handlers.get('load-custom-entries')(event), save: value => handlers.get('save-custom-entries')(event, value) };

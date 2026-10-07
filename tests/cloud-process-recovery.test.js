@@ -11,7 +11,7 @@ const { createHash } = require('node:crypto');
 const { once } = require('node:events');
 const { CloudStore } = require('../src/main/cloud/store');
 const { CloudRepository } = require('../src/main/cloud/repository');
-const archive = require('../src/main/archive');
+const archive = require('../src/main/backup/archive');
 const { createFileProvider } = require('./fixtures/cloud-process-recovery.cjs');
 
 function startOwnedChild(root, checkpoint, mode) {

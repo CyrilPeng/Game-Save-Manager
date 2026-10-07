@@ -10,18 +10,17 @@ const util = require('util');
 const i18next = require('i18next');
 const moment = require('moment');
 
-const { resolvePlaceholder } = require('./gameData');
-const { getAllAccountIds } = require('./gameData');
-const { registryKeyExists } = require('./registry');
+const { resolvePlaceholder } = require('../games/gameData');
+const { getAllAccountIds } = require('../games/gameData');
+const { registryKeyExists } = require('../platform/registry');
 const snapshotStore = require('./snapshotStore');
 const coordinator = require('./backupCoordinator');
 const {
     getGameDisplayName, mapConcurrent, calculateDirectorySize,
     findGameInstallPath, getLatestModificationTime, getSettings
-} = require('./global');
+} = require('../global');
 
 const execFilePromise = util.promisify(execFile);
-
 
 // A sample restore game object: {
 //     "wiki_page_id": "97395",
@@ -384,7 +383,7 @@ async function restoreSnapshot({ gameId, folder, mappings, confirmRegistry = fal
                         throw restoreError('PARTIAL_RESTORE', error.message);
                     }
                 }
-                const customGameRegistration = await require('./customGameStore').registerRestoredCustomGame(snapshot.root, snapshot, plan);
+                const customGameRegistration = await require('../games/customGameStore').registerRestoredCustomGame(snapshot.root, snapshot, plan);
                 return { action, error: null, snapshotId: snapshot.snapshotId, protectionSnapshotId: protectionSnapshot.snapshotId, protectionFolder: protectionSnapshot.folder, pathResults,
                     ...(customGameRegistration ? { customGameRegistration } : {}) };
             } finally {

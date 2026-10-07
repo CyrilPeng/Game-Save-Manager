@@ -86,7 +86,7 @@ async function run() {
     if (!root.startsWith(temporaryRoot + path.sep) || !path.basename(root).startsWith('gsm-cloud-process-') || !checkpoints.includes(selectedCheckpoint) || !['start', 'resume'].includes(mode)) throw new Error('Invalid disposable fixture arguments');
     const { CloudService } = require('../../src/main/cloud/service');
     const { CloudStore } = require('../../src/main/cloud/store');
-    const snapshots = require('../../src/main/snapshotStore');
+    const snapshots = require('../../src/main/backup/snapshotStore');
     const backupRoot = path.join(root, 'backups'), userDataPath = path.join(root, 'user-data');
     const kind = ['deleting', 'tombstone-written', 'manifest-deleted'].includes(selectedCheckpoint) ? 'delete' : 'upload';
     const store = new CloudStore(path.join(userDataPath, 'GSM Cloud', 'cloud.db'));

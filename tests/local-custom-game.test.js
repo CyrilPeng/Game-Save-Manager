@@ -7,8 +7,8 @@ const vm = require('node:vm');
 const { randomUUID } = require('node:crypto');
 const { createRequire } = require('node:module');
 const { setImmediate: nextTurn } = require('node:timers/promises');
-const custom = require('../src/main/customGameStore');
-const snapshots = require('../src/main/snapshotStore');
+const custom = require('../src/main/games/customGameStore');
+const snapshots = require('../src/main/backup/snapshotStore');
 
 async function fixture(t) {
     const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'gsm-custom-game-test-'));
@@ -176,12 +176,9 @@ async function restoreFixture(t, { skip = false } = {}) {
             return { snapshotId: randomUUID(), folder: 'protection' };
         } },
     };
-    const filename = path.resolve(__dirname, '../src/main/restore.js');
-    const localRequire = createRequire(filename);
-    const module = { exports: {} };
-    const wrapper = vm.runInThisContext(`(function(require,module,exports,__filename,__dirname){${fs.readFileSync(filename, 'utf8')}\n})`, { filename });
-    wrapper(key => Object.prototype.hasOwnProperty.call(overrides, key) ? overrides[key] : localRequire(key), module, module.exports, filename, path.dirname(filename));
-    return { ...x, backupRoot, state, source, destination, restore: module.exports.restoreSnapshot,
+    const filename = path.resolve(__dirname, '../src/main/backup/restore.js');
+    const loaded = require('./helpers/load-main.cjs').createMainLoader(overrides)('restore');
+    return { ...x, backupRoot, state, source, destination, restore: loaded.restoreSnapshot,
         request: { gameId: candidate.snapshot.gameId, folder: identity.folder, mappings: { path1: destination }, userActionForAll: skip ? 'skip' : null } };
 }
 

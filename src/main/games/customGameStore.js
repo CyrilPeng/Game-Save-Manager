@@ -1,6 +1,6 @@
 const fs = (() => { try { return require('original-fs'); } catch { return require('fs'); } })();
 const path = require('path');
-const snapshotStore = require('./snapshotStore');
+const snapshotStore = require('../backup/snapshotStore');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const platforms = { win32: 'win', darwin: 'mac', linux: 'linux' };

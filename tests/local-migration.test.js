@@ -4,8 +4,8 @@ const fs = (() => { try { return require('original-fs'); } catch { return requir
 const path = require('node:path');
 const os = require('node:os');
 const { setImmediate: nextTurn } = require('node:timers/promises');
-const { migrateBackupLibrary, validateMigrationPaths } = require('../src/main/backupMigration');
-const { withGameLock, withLibraryLock, isLibraryBusy } = require('../src/main/backupCoordinator');
+const { migrateBackupLibrary, validateMigrationPaths } = require('../src/main/backup/backupMigration');
+const { withGameLock, withLibraryLock, isLibraryBusy } = require('../src/main/backup/backupCoordinator');
 
 async function fixture(t) {
     const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'gsm-migration-test-'));
@@ -127,20 +127,15 @@ test('settings activation failure retains both original and verified new copy', 
 
 test('global migration restores the in-memory backup path when settings persistence fails', async t => {
     const x = await fixture(t);
-    const filename = path.resolve(__dirname, '../src/main/global.js');
-    const text = await fs.promises.readFile(filename, 'utf8');
-    const start = text.indexOf('async function moveFilesWithProgress(');
-    const end = text.indexOf('module.exports =', start);
     const settings = { backupPath: x.source };
     const status = { migrating: false };
-    const factory = new Function('require', 'i18next', 'win', 'status', 'settings', 'saveSettings', 'coordinator', `return (${text.slice(start, end).trim()});`);
-    const migrate = factory(
-        name => { assert.equal(name, './backupMigration'); return { migrateBackupLibrary }; },
-        { t: (key, options) => options?.defaultValue || key },
-        { isDestroyed: () => false, webContents: { send() {} } }, status, settings,
-        async (_key, destination) => { settings.backupPath = destination; return null; },
-        { isLibraryBusy },
-    );
+    const { createMigrationController } = require('../src/main/backup/migrationController');
+    const migrate = createMigrationController({
+        getMainWin: () => ({ isDestroyed: () => false, webContents: { send() {} } }),
+        getSettings: () => settings, getStatus: () => status,
+        saveSettings: async (_key, destination) => { settings.backupPath = destination; return null; },
+        coordinator: { isLibraryBusy }, i18next: { t: (key, options) => options?.defaultValue || key },
+    });
     const result = await migrate(x.source, x.destination);
     assert.equal(result.success, false);
     assert.equal(result.code, 'MIGRATION_SETTINGS_FAILED');

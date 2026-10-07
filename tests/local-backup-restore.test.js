@@ -3,10 +3,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const vm = require('node:vm');
-const { createRequire } = require('node:module');
-const store = require('../src/main/snapshotStore');
-const coordinator = require('../src/main/backupCoordinator');
+const store = require('../src/main/backup/snapshotStore');
+const coordinator = require('../src/main/backup/backupCoordinator');
 
 async function setup(t, { realRegistry = false, globalOverrides = {}, snapshotStoreOverride = store } = {}) {
     const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'gsm-restore-test-'));
@@ -29,19 +27,12 @@ async function setup(t, { realRegistry = false, globalOverrides = {}, snapshotSt
     const overrides = {
         electron: { app: { getPath: () => root }, BrowserWindow: { getFocusedWindow: () => null }, dialog: {} },
         'original-fs': fs, axios: {}, 'fs-extra': {}, glob: {}, sqlite3: {},
-        i18next: { t: key => key }, './global': globalMock, './snapshotStore': snapshotStoreOverride,
+        i18next: { t: key => key }, './global': globalMock, './snapshotStore': snapshotStoreOverride, './backupCoordinator': coordinator,
         './gameData': { getAllAccountIds: () => ({ steamAccountId: '111' }), resolvePlaceholder: token => token === '{{p|hkcu}}' ? 'HKEY_CURRENT_USER' : null },
-        './registry': realRegistry ? require('../src/main/registry') : { registryKeyExists: () => false },
+        './registry': realRegistry ? require('../src/main/platform/registry') : { registryKeyExists: () => false },
         './autoBackup': { pauseAutoBackupForRestore: async () => { state.paused++; return async () => { state.resumed++; }; } },
     };
-    function load(name) {
-        const filename = path.resolve(__dirname, `../src/main/${name}.js`);
-        const localRequire = createRequire(filename);
-        const module = { exports: {} };
-        const wrapper = vm.runInThisContext(`(function(require,module,exports,__filename,__dirname){${fs.readFileSync(filename, 'utf8')}\n})`, { filename });
-        wrapper(key => Object.prototype.hasOwnProperty.call(overrides, key) ? overrides[key] : localRequire(key), module, module.exports, filename, path.dirname(filename));
-        return module.exports;
-    }
+    const load = require('./helpers/load-main.cjs').createMainLoader(overrides);
     const backup = load('backup');
     overrides['./backup'] = backup;
     const restore = load('restore');
@@ -215,7 +206,7 @@ test('Windows registry backup, protected restore and missing-key rollback use an
     const x = await setup(t, { realRegistry: true });
     const { execFile } = require('node:child_process');
     const run = require('node:util').promisify(execFile);
-    const registry = require('../src/main/registry');
+    const registry = require('../src/main/platform/registry');
     const key = `HKEY_CURRENT_USER\\Software\\GSMCloudValidation_${require('node:crypto').randomUUID()}`;
     assert.match(key, /^HKEY_CURRENT_USER\\Software\\GSMCloudValidation_[a-f0-9-]{36}$/);
     assert.equal(registry.registryKeyExists(key), false);
@@ -331,7 +322,7 @@ test('identical mapped destinations still fail before protection or writes', asy
 });
 
 test('exported missing-target protection snapshots import fully and require mapping before rollback', async t => {
-    const x = await setup(t), archive = require('../src/main/archive');
+    const x = await setup(t), archive = require('../src/main/backup/archive');
     await x.backup.backupGame(x.game);
     const selected = (await store.listSnapshots(x.backupRoot))[0];
     await fs.promises.unlink(x.save);

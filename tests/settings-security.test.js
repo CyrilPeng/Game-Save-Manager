@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { validateSettingsUpdates, publicSettings } = require('../src/main/settingsValidation');
+const { validateSettingsUpdates, publicSettings } = require('../src/main/settings/validation');
 test('ordinary settings cannot accept or return cloud secrets including nested values', () => {
     assert.equal(validateSettingsUpdates({password:'secret'}),false);
     assert.equal(validateSettingsUpdates({cloud:{secretAccessKey:'secret'}}),false);

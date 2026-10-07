@@ -3,7 +3,7 @@ const chokidar = require('chokidar');
 const i18next = require('i18next');
 const moment = require('moment');
 
-const { getSettings, saveSettings, getMainWin } = require('./global');
+const { getSettings, saveSettings, getMainWin } = require('../global');
 const { getGameDataFromDB, backupGame } = require('./backup');
 
 // Map<wikiId, { mode, intervalMinutes, timer?, watcher?, logs[] }>

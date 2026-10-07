@@ -474,8 +474,8 @@ async function realHarness(t) {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'gsm-cloud-flow-'));
     const provider = memoryProvider();
     const services = [];
-    const snapshots = require('../src/main/snapshotStore');
-    const archive = require('../src/main/archive');
+    const snapshots = require('../src/main/backup/snapshotStore');
+    const archive = require('../src/main/backup/archive');
     t.after(async () => { for (const service of services) await service.close(); await fs.rm(root, { recursive: true, force: true }); });
     async function newService(name, extra = {}) {
         const backupRoot = path.join(root, name, 'backups');
@@ -511,7 +511,7 @@ async function realHarness(t) {
 }
 
 test('migration admission covers upload reservation, durable queue commit and cancellation cleanup', { timeout: 10000 }, async t => {
-    const coordinator = require('../src/main/backupCoordinator');
+    const coordinator = require('../src/main/backup/backupCoordinator');
     const harness = await realHarness(t), service = await harness.newService('migration-upload', { coordinator });
     service.queue.stopping = true;
     const target = await harness.target(service);
@@ -570,7 +570,7 @@ test('migration admission covers upload reservation, durable queue commit and ca
 });
 
 test('download and restore acceptance block migration before persistence, and a reserved migration rejects new jobs', { timeout: 10000 }, async t => {
-    const coordinator = require('../src/main/backupCoordinator');
+    const coordinator = require('../src/main/backup/backupCoordinator');
     const harness = await realHarness(t), service = await harness.newService('migration-download', { coordinator });
     service.queue.stopping = true;
     const fixture = manifestFixture(), target = await harness.target(service, fixture.manifest.repositoryId);
@@ -611,7 +611,7 @@ test('download and restore acceptance block migration before persistence, and a 
 });
 
 test('local commit holding the library read lock cannot deadlock behind a pending migration writer', { timeout: 10000 }, async t => {
-    const coordinator = require('../src/main/backupCoordinator');
+    const coordinator = require('../src/main/backup/backupCoordinator');
     const harness = await realHarness(t), service = await harness.newService('migration-hook', { coordinator });
     service.queue.stopping = true;
     const target = await harness.target(service);

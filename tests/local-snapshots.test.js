@@ -4,8 +4,8 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const store = require('../src/main/snapshotStore');
-const coordinator = require('../src/main/backupCoordinator');
+const store = require('../src/main/backup/snapshotStore');
+const coordinator = require('../src/main/backup/backupCoordinator');
 
 async function sandbox(t) {
     const directory = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'gsm-local-test-'));

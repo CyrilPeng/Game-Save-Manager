@@ -4,8 +4,8 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
 const { randomUUID } = require('node:crypto');
-const archive = require('../src/main/archive');
-const snapshots = require('../src/main/snapshotStore');
+const archive = require('../src/main/backup/archive');
+const snapshots = require('../src/main/backup/snapshotStore');
 
 test('archive listing rejects traversal, links, duplicate names and expanded limits', () => {
     const record = (name, extra = '') => `Path = ${name}\nSize = 5\nAttributes = A\n${extra}`;

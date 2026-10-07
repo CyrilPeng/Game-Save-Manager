@@ -1,6 +1,6 @@
 const fs = (() => { try { return require('original-fs'); } catch { return require('fs'); } })();
 const path = require('path');
-const os = require('os');
+
 const { randomUUID, createHash } = require('crypto');
 const { spawn } = require('child_process');
 const { pipeline } = require('stream/promises');

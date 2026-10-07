@@ -31,7 +31,7 @@ async function runElectron() {
     const { app, BrowserWindow, ipcMain, safeStorage } = require('electron');
     const { createCloudService } = require('../src/main/cloud/service');
     const { registerCloudIpc } = require('../src/main/cloud/ipc');
-    const snapshots = require('../src/main/snapshotStore');
+    const snapshots = require('../src/main/backup/snapshotStore');
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gsm-electron-e2e-'));
     app.setPath('userData', path.join(root, 'electron-profile'));
     app.disableHardwareAcceleration();
