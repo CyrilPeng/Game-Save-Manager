@@ -27,11 +27,9 @@
         "title": "Sobre",
         "current_version": "Versão atual: ",
         "latest_version": "Versão mais recente: ",
-        "official_website": "Site oficial: ",
         "github": "GitHub: ",
-        "bilibili": "Bilibili: ",
         "load_failed": "Falha ao carregar",
-        "update": "Atualizar agora"
+        "update": "Abrir versões"
     },
     "main": {
         "title": "Game Save Manager",

@@ -1,11 +1,10 @@
+import semver from 'semver';
 import { updateTranslations } from './utility.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const latestVersionSpan = document.getElementById('latest-version');
     const currentVersionSpan = document.getElementById('current-version');
-    const websiteLink = document.getElementById('website-link');
     const githubLink = document.getElementById('github-link');
-    const bilibiliLink = document.getElementById('bilibili-link');
     const updateButton = document.getElementById('update-button');
 
     const fetchLatestVersion = async () => {
@@ -22,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
             latestVersionSpan.style.color = 'red';
         }
 
-        if (latestVersion && latestVersion > currentVersion) {
+        if (latestVersion && semver.gt(latestVersion, currentVersion)) {
             currentVersionSpan.style.color = 'red';
             latestVersionSpan.style.color = 'green';
 
@@ -36,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             updateButton.addEventListener('click', () => {
                 if (updateButton.disabled) return;
-                // Blocked until the updater exits or the attempt fails
+                // Keep the button disabled while opening the releases page
                 setBusy(true);
                 window.api.send('update-app', latestVersion);
             });
@@ -47,13 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchLatestVersion();
     updateTranslations(document);
 
-    websiteLink.addEventListener('click', () => {
-        window.api.invoke('open-url', websiteLink.innerText);
-    });
     githubLink.addEventListener('click', () => {
         window.api.invoke('open-url', githubLink.innerText);
-    });
-    bilibiliLink.addEventListener('click', () => {
-        window.api.invoke('open-url', bilibiliLink.innerText);
     });
 });

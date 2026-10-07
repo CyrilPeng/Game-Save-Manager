@@ -15,12 +15,9 @@ const customGameStore = require('./customGameStore');
 const archive = require('./archive');
 const { validateSettingsUpdates, publicSettings } = require('./settingsValidation');
 
-const {
-    SIGNED_URL_DOWNLOAD_ENDPOINT = '',
-    VERSION_CHECKER_ENDPOINT = '',
-    CLIENT_API_KEY = '',
-    signedGet = () => { throw new Error('Request signing is unavailable in this build'); },
-} = require('./secret_config');
+const project = require("../project");
+const { createReleaseClient } = require("./updates/releases");
+const releaseClient = createReleaseClient({ currentVersion: app.getVersion() });
 
 let win;
 let settingsWin;
@@ -201,59 +198,9 @@ function resource_path(resource_name) {
     }
 }
 
-async function getSignedDownloadUrl(filePathOnS3) {
-    if (!SIGNED_URL_DOWNLOAD_ENDPOINT || !CLIENT_API_KEY) {
-        console.error("Error: API Gateway endpoint or Client API Key is not configured.");
-        return null;
-    }
-
-    try {
-        const response = await signedGet(SIGNED_URL_DOWNLOAD_ENDPOINT, { 'filePath': filePathOnS3 }, API_TIMEOUT);
-
-        const data = response.data;
-        const signedUrl = data.signedUrl;
-        if (signedUrl) {
-            return signedUrl;
-        } else {
-            console.error(`Error: 'signedUrl' not found in response. Response: ${JSON.stringify(data)}`);
-            return null;
-        }
-    } catch (error) {
-        console.error(`Error retrieving signed URL: ${error.message}`);
-        return null;
-    }
-}
-
-async function getLatestVersion(appName) {
-    if (!VERSION_CHECKER_ENDPOINT || !CLIENT_API_KEY) {
-        console.error("Error: API Gateway endpoint or Client API Key is not configured.");
-        return null;
-    }
-
-    try {
-        const response = await signedGet(VERSION_CHECKER_ENDPOINT, { 'appName': appName }, API_TIMEOUT);
-
-        const data = response.data;
-        const latestVersion = data.latest_version;
-        if (!latestVersion) {
-            console.error(`Error: 'latest_version' not found in response. Response: ${JSON.stringify(data)}`);
-            return null;
-        }
-
-        const normalizedVersion = typeof latestVersion === 'string'
-            ? semver.valid(latestVersion.trim())
-            : null;
-
-        if (!normalizedVersion) {
-            console.error(`Error: Invalid latest version '${latestVersion}' received from server.`);
-            return null;
-        }
-
-        return normalizedVersion;
-    } catch (error) {
-        console.error(`Error retrieving latest version: ${error.message}`);
-        return null;
-    }
+async function getLatestVersion() {
+    try { return (await releaseClient.latest())?.version || null; }
+    catch (error) { console.error('Unable to check project releases:', error.message); return null; }
 }
 
 async function checkAppUpdate() {
@@ -286,34 +233,6 @@ async function checkAppUpdate() {
     }
 }
 
-const VERSION_PING_INTERVAL_MS = 60 * 60 * 1000;
-
-let versionPingTimer = null;
-
-function startVersionPing() {
-    if (versionPingTimer) {
-        return;
-    }
-
-    if (!settings.autoAppUpdate) {
-        getLatestVersion('GSM').catch(() => { });
-    }
-
-    versionPingTimer = setInterval(() => {
-        getLatestVersion('GSM').catch(() => { });
-    }, VERSION_PING_INTERVAL_MS);
-
-    // Never let the ping alone hold the process open at quit
-    versionPingTimer.unref();
-}
-
-function stopVersionPing() {
-    if (versionPingTimer) {
-        clearInterval(versionPingTimer);
-        versionPingTimer = null;
-    }
-}
-
 function showNotification(type, title, body, latest_version = 0) {
     const icon_map = {
         'app': resource_path('logo.png'),
@@ -339,7 +258,7 @@ function showNotification(type, title, body, latest_version = 0) {
             </toast>
         `;
 
-        app.setAppUserModelId('com.yyc.game-save-manager');
+        app.setAppUserModelId(project.appId);
         const notification = new Notification({
             toastXml: toastXml
         });
@@ -363,43 +282,14 @@ function showNotification(type, title, body, latest_version = 0) {
     }
 }
 
-async function updateApp(latest_version) {
+async function updateApp() {
     if (updatingApp) return;
     updatingApp = true;
-
-    const updaterPath = path.join(path.dirname(app.getPath('exe')), 'Updater.exe');
-    const s3Path = `GSM/Game Save Manager Setup ${latest_version}.exe`;
-
-    // Released on every outcome, so a closed updater cannot wedge the app.
-    const releaseUpdate = () => {
+    try { await shell.openExternal(project.releasesUrl); }
+    catch (error) { console.error('Unable to open project releases:', error.message); }
+    finally {
         updatingApp = false;
-        aboutWin?.webContents.send('app-update-ended');
-    };
-
-    // The updater cannot sign its own requests, so it is handed a ready signed URL.
-    const signedUrl = await getSignedDownloadUrl(s3Path);
-    if (!signedUrl) {
-        releaseUpdate();
-        win?.webContents.send('show-alert', 'error', i18next.t('alert.app_update_failed'));
-        return;
-    }
-
-    try {
-        const escape = (value) => String(value).replace(/'/g, "''");
-        const argsLine = `--pid ${process.pid} --s3-path "${escape(s3Path)}" --url "${escape(signedUrl)}"`
-            + ` --theme ${escape(settings.theme)} --language ${escape(settings.language)}`;
-        const launcher = spawn('powershell.exe', ['-NoProfile', '-Command',
-            `Start-Process -FilePath '${escape(updaterPath)}' -ArgumentList '${argsLine}' -Verb RunAs -Wait`
-        ], { stdio: 'ignore' });
-
-        launcher.once('close', releaseUpdate);
-        launcher.once('error', (error) => {
-            console.error('An error occurred while trying to spawn the updater process:', error);
-            releaseUpdate();
-        });
-    } catch (error) {
-        console.error('An error occurred while trying to spawn the updater process:', error);
-        releaseUpdate();
+        if (aboutWin && !aboutWin.isDestroyed()) aboutWin.webContents.send('app-update-ended');
     }
 }
 
@@ -1116,12 +1006,9 @@ module.exports = {
     getMainWin: () => win,
     getStatus: () => status,
     updateStatus,
-    getSignedDownloadUrl,
     getCurrentVersion: () => appVersion,
     getLatestVersion,
     checkAppUpdate,
-    startVersionPing,
-    stopVersionPing,
     updateApp,
     getGameDisplayName,
     mapConcurrent,

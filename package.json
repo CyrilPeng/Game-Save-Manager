@@ -1,7 +1,7 @@
 {
   "name": "game-save-manager",
   "version": "2.2.2-beta.1",
-  "description": "Easily backup and restore your game saves anytime",
+  "description": "游戏存档的本地版本备份、云端双备份与跨设备恢复",
   "main": "dist/out/main/main.js",
   "scripts": {
     "tailwind:build": "npx tailwindcss -i ./src/renderer/styles.css -o ./src/renderer/tailwind-output.css --minify",
@@ -16,9 +16,9 @@
   "build": {
     "extends": null,
     "icon": "./src/assets/logo.ico",
-    "appId": "com.yyc.game-save-manager",
+    "appId": "com.cyrilpeng.game-save-manager",
     "productName": "Game Save Manager",
-    "copyright": "Copyright © 2024-2026 Yongcan Yang",
+    "copyright": "Copyright © 2024-2026 Yongcan Yang; additional changes © 2026 CyrilPeng",
     "asarUnpack": [
       "**/*.node",
       "**/7zip-bin/win/**"
@@ -42,7 +42,7 @@
     ],
     "extraFiles": [
       {
-        "from": "../Automation/GSM/database.db",
+        "from": "./resources/database/database.db",
         "to": "./database/database.db"
       }
     ],
@@ -53,7 +53,7 @@
       "zh-TW"
     ]
   },
-  "author": "Yongcan Yang",
+  "author": "CyrilPeng",
   "license": "GPL-3.0-only",
   "dependencies": {
     "@aws-sdk/client-s3": "3.1146.0",
@@ -109,5 +109,16 @@
   },
   "engines": {
     "node": ">=24 <25"
+  },
+  "contributors": [
+    "Yongcan Yang"
+  ],
+  "homepage": "https://github.com/CyrilPeng/Game-Save-Manager",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CyrilPeng/Game-Save-Manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/CyrilPeng/Game-Save-Manager/issues"
   }
 }

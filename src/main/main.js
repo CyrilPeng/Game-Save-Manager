@@ -17,7 +17,6 @@ const {
     importBackups, browseLocalSave, deleteLocalSave, readJsonFile, writeJsonFile,
     osKeyMap, loadSettings, saveSettings, getSettings,
     moveFilesWithProgress, getCurrentVersion, getLatestVersion, updateApp,
-    startVersionPing, stopVersionPing
 } = require('./global');
 const { getGameData, initializeGameData, detectGamePaths, getAllAccountIds } = require('./gameData');
 const { getGameDataFromDB, getAllGameDataFromDB, getGameTitlesByIds, backupGame, updateDatabase } = require('./backup');
@@ -84,7 +83,7 @@ if (!gotTheLock) {
 
     app.on('will-quit', () => {
         stopAllAutoBackups();
-        stopVersionPing();
+
     });
 
     if (process.platform === 'win32') {
@@ -132,12 +131,12 @@ app.whenReady().then(async () => {
         for (const channel of CLOUD_CHANNELS) ipcMain.handle(channel, () => ({ ok: false, error: { code: 'CLOUD_ERROR', message: 'Cloud storage is unavailable.' } }));
     }
     await createMainWindow();
-    app.setAppUserModelId(i18next.t('main.title'));
+    app.setAppUserModelId(require('../project').appId);
 
     if (getSettings().autoAppUpdate) {
         checkAppUpdate();
     }
-    startVersionPing();
+
 
     await restoreAutoBackups();
 

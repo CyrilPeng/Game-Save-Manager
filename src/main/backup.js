@@ -15,7 +15,7 @@ const moment = require('moment');
 const sqlite3 = require('sqlite3');
 
 const {
-    getMainWin, getStatus, updateStatus, getSignedDownloadUrl, getGameDisplayName,
+    getMainWin, getStatus, updateStatus, getGameDisplayName,
     mapConcurrent, calculateDirectorySize, walkDirectory, readJsonFile,
     getNewestBackup,
     findGameInstallPath, osKeyMap, getSettings, saveSettings
@@ -76,7 +76,7 @@ async function ensureDatabase() {
 
     const installedDbPath = app.isPackaged
         ? path.join(path.dirname(app.getPath('exe')), 'database', 'database.db')
-        : path.join('./database', 'database.db');
+        : path.join(app.getAppPath(), 'resources', 'database', 'database.db');
 
     if (!fs.existsSync(installedDbPath)) {
         dialog.showErrorBox(
@@ -114,80 +114,24 @@ async function queryGamesByColumn(db, column, values) {
 }
 
 async function updateDatabase() {
-    const progressId = 'update-db';
+    if (getStatus().updating_db) return;
+    updateStatus('updating_db', true);
+    const notify = (channel, ...args) => { const win = getMainWin(); if (win && !win.isDestroyed()) win.webContents.send(channel, ...args); };
+    const progressId = 'update-database';
     const progressTitle = i18next.t('alert.updating_database');
-    const dbPath = databasePath();
-    const dbTempPath = `${dbPath}.temp`;
-
-    getMainWin().webContents.send('update-progress', progressId, progressTitle, 'start');
-
+    notify('update-progress', progressId, progressTitle, 'start');
     try {
-        if (!fs.existsSync(path.dirname(dbPath))) {
-            fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-        }
-        if (fs.existsSync(dbPath)) {
-            fs.copyFileSync(dbPath, dbTempPath);
-        }
-
-        await new Promise(async (resolve, reject) => {
-            try {
-                const databaseLink = await getSignedDownloadUrl('GSM/database.db');
-                if (!databaseLink) {
-                    throw new Error("Request failed.");
-                }
-                const { data, headers } = await axios({
-                    method: 'get',
-                    url: databaseLink,
-                    responseType: 'stream',
-                });
-
-                const totalSize = parseInt(headers['content-length'], 10);
-                let downloadedSize = 0;
-
-                const fileStream = fs.createWriteStream(dbTempPath);
-
-                data.on('data', (chunk) => {
-                    downloadedSize += chunk.length;
-                    const progressPercentage = Math.round((downloadedSize / totalSize) * 100);
-                    getMainWin().webContents.send('update-progress', progressId, progressTitle, progressPercentage);
-                });
-
-                data.on('error', (error) => {
-                    reject(error);
-                });
-
-                fileStream.on('finish', () => {
-                    fileStream.close(() => {
-                        resolve();
-                    });
-                });
-
-                fileStream.on('error', (error) => {
-                    reject(error);
-                });
-
-                data.pipe(fileStream);
-
-            } catch (error) {
-                reject(error);
-            }
-        });
-
-        if (fs.existsSync(dbTempPath)) {
-            fs.copyFileSync(dbTempPath, dbPath);
-            fs.unlinkSync(dbTempPath);
-        }
-        getMainWin().webContents.send('update-progress', progressId, progressTitle, 'end');
-        getMainWin().webContents.send('show-alert', 'success', i18next.t('alert.update_db_success'));
-
+        const { createReleaseClient } = require('./updates/releases');
+        const { updateDatabaseFromRelease } = require('./updates/database');
+        const release = await createReleaseClient({ currentVersion: app.getVersion() }).latest();
+        await updateDatabaseFromRelease({ release, destination: databasePath(),
+            onProgress: (received, total) => notify('update-progress', progressId, progressTitle, total ? Math.min(99, Math.round(received / total * 100)) : 0) });
+        notify('show-alert', 'success', i18next.t('alert.update_db_success'));
     } catch (error) {
-        console.error(`An error occurred while updating the database: ${error.message}`);
-        getMainWin().webContents.send('show-alert', 'modal', i18next.t('alert.error_during_db_update'), error.message);
-        getMainWin().webContents.send('update-progress', progressId, progressTitle, 'end');
-
-        if (fs.existsSync(dbTempPath)) {
-            fs.unlinkSync(dbTempPath);
-        }
+        notify('show-alert', 'modal', i18next.t('alert.error_during_db_update'), error.message);
+    } finally {
+        updateStatus('updating_db', false);
+        notify('update-progress', progressId, progressTitle, 'end');
     }
 }
 

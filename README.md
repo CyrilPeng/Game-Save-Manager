@@ -1,63 +1,65 @@
 # Game Save Manager
 
-English | [简体中文](./README_CN.md) | [繁體中文](./README_TW.md)
+简体中文 | [English](./README_EN.md)
 
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/dyang886/Game-Save-Manager/total) ![GitHub Repo stars](https://img.shields.io/github/stars/dyang886/Game-Save-Manager?style=flat&color=ffc000) ![GitHub Release](https://img.shields.io/github/v/release/dyang886/Game-Save-Manager?link=https%3A%2F%2Fgithub.com%2Fdyang886%2FGame-Save-Manager%2Freleases%2Flatest) ![GitHub License](https://img.shields.io/github/license/dyang886/Game-Save-Manager) <a href="https://discord.gg/d627qVyHEF" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/Join_Discord-f0f0f0?logo=discord"></a> <a href="https://pd.qq.com/s/h06qbdey6" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/Join_QQ-f0f0f0?logo=qq"></a>
+Windows 游戏存档管理器，提供本地版本备份、WebDAV / S3 云端备份和跨设备恢复。本项目由 CyrilPeng 独立维护，优先保障存档备份与恢复的可靠性。
 
-<div align="center">
-    <img src="src/assets/logo.png" alt="Game Save Manager logo" width="250" />
-</div>
+## 功能
 
-**Please visit our official website [https://gamezonelabs.com](https://gamezonelabs.com) for more info.**
+- 自动发现已安装游戏及已知存档位置，支持 Steam、Epic 等游戏平台。
+- 手动添加文件、文件夹和注册表存档，支持路径占位符与多账号识别。
+- 本地快照保留版本历史，支持固定版本、保留数量和自动备份。
+- 将本地快照上传到 WebDAV 或 S3 兼容存储；本地备份和云端任务分别记录结果。
+- 云任务持久化，支持暂停、重试、连接诊断及旧备份预览补传。
+- 浏览其他设备的云端版本，下载、校验后恢复；支持导入、导出 .gsmr 归档。
 
-Stop trusting the cloud blindly. **Game Save Manager (GSM)** secures your game saves from platforms like Steam, Epic, and custom locations all in one place. Auto-detect installed games, maintain a versioned history, and restore your progress with a single click.
+## 下载与使用
 
----
+在 [Releases](https://github.com/CyrilPeng/Game-Save-Manager/releases) 下载 Windows x64 安装包。测试版本会标记为 Pre-release；当前仓库中的改动只有发布新安装包后才会进入下载版本。
 
-## Core Features
+1. 选择本地备份目录，建议放在与原存档不同的磁盘。
+2. 扫描游戏，或在“自定义游戏”中添加存档位置。
+3. 先完成一次本地备份，再到“云存储”配置 WebDAV 或 S3。
+4. 检查连接诊断中的认证、列举、写入、读回校验和清理结果，然后执行一次实际上传。
+5. 选择一个云端版本，下载并在临时目录验证恢复结果，确认能用后再建立自动备份策略。
 
-### Centralized Management (Powered by PCGamingWiki)
-Stop digging through AppData folders. GSM automatically finds and organizes your save files into one clean, interactive table. Leveraging the world's largest crowd-sourced game database, it supports over 14,000 game save locations.
+云端备份是版本副本，不是实时双向同步。连接测试通过也不能替代完整的上传、下载和恢复验证。123 云盘的下载重定向已有本地回归用例；真实账号仍需实机验证。
 
-### Smart Detection Engine
-GSM doesn't just look at one folder. It uses a dual-scan system:
-* **Install Path Scan:** Automatically detects games installed via Steam, Epic, Battle.net, and more by scanning your library folders.
-* **Deep Database Scan:** Even uninstalled games leave saves behind. GSM checks thousands of known save paths (Registry, AppData, Documents) to recover forgotten history.
+## 配置与数据
 
-### Time Travel & Versioning
-Messed up a dialogue choice? Corrupted a save file? GSM keeps a rolling history of backups for every game. Set an **Auto-Rotation** limit to automatically clean up old files and save disk space, or mark specific backups (like "Before Final Boss") as **Permanent Pinned Saves** so they are never deleted.
+现有应用名称、用户数据位置及本地备份格式保持兼容。配置与云任务保存在 Electron 的 userData 目录；Windows 通常为 %APPDATA%/Game Save Manager，已有安装可能沿用历史目录。备份内容保存在设置的备份目录。云端凭据通过系统凭据加密接口保存，跨设备使用时需重新配置。
 
-### Cross-Device Migration
-Moving to a new PC? GSM lets you export your entire save history into a single `.gsmr` archive. Import it on your new machine, and GSM will smartly merge the backups, combining existing history with the imported files effortlessly.
+游戏位置数据库随应用提供。数据库更新从本仓库 Release 下载 database.db 和 database-manifest.json，验证 SHA-256、SQLite 完整性和必要字段后替换；更新失败会保留旧数据库。应用升级通过本仓库 Releases 下载，软件不再访问原作者的更新服务。
 
-### Account Awareness
-GSM intelligently detects Account IDs for platforms like Steam, Ubisoft, Epic, Xbox, and Rockstar. This allows you to back up specific accounts individually or create global backups encompassing all accounts on the system.
+## 开发
 
-### Support the Unsupported
-Playing a niche indie game or a heavily modded title? Use the **Custom Games** tab to manually add any folder, file, or registry key to the backup system. Utilize **Smart Placeholders** (like `%AppData%` or your `%UserProfile%`) to ensure your custom backups work seamlessly on any PC.
+需要 Windows x64、Node.js 24、npm 和 Git。数据库已包含在仓库，不需要外部 Automation 项目或私有配置。
 
----
 
-## Installation
+```bash
+git clone https://github.com/CyrilPeng/Game-Save-Manager.git
+cd Game-Save-Manager
+npm ci
+npm start
+```
 
-1. Navigate to our [Latest Release](https://github.com/dyang886/Game-Save-Manager/releases) page.
-2. Download the latest Windows (64-bit) installer.
-3. Run the installer and follow the on-screen instructions.
-4. Launch GSM and secure your progress!
+常用命令：
 
----
+| 命令 | 用途 |
+| --- | --- |
+| npm test | 文件、快照、恢复、云任务和权限回归 |
+| npm run test:electron | 真实 Electron、SQLite、7-Zip、WebDAV 的隔离集成测试 |
+| npm run build | 编译应用 |
+| npm run package | 生成未安装的应用目录 |
 
-## Advanced Usage & Options
+## 反馈与贡献
 
-While GSM is designed to be plug-and-play, you have full control over your backup strategy via the app's interface:
+请在 [Issues](https://github.com/CyrilPeng/Game-Save-Manager/issues) 提供软件版本、Windows 版本、操作步骤和脱敏日志。云存储问题请同时提供服务类型和各项连接诊断结果，不要提交密码、令牌或真实存档。
 
-* **Batch Operations:** Select multiple detected games from the Backup or Restore tabs to process them all with a single click. 
-* **Smart Restores:** When restoring, GSM automatically selects the most recent backup. If it detects that your current local files are newer than the backup, it will safely prompt you for confirmation before overwriting.
-* **Backup Limits:** Configure the maximum number of rolling backups per game in your settings to keep your storage usage in check.
-* **Export Destination:** Easily choose where your exported `.gsmr` files are saved for quick external drive transfers.
+修改备份、恢复、归档或云队列时，应运行核心测试及 Electron 集成测试。提交说明使用约定式提交；版本说明集中在 GitHub Releases。
 
----
+## 许可证与来源
 
-## Support
+本项目采用 [GPL-3.0-only](./LICENSE.txt)，保留原作者版权声明。游戏位置数据来自 PCGamingWiki。
 
-For issues, feature requests, or contributions, please visit the [Issues](https://github.com/dyang886/Game-Save-Manager/issues) page or join our community via Discord/QQ (links at the top of the page).
+本项目最初 fork 自 [dyang886/Game-Save-Manager](https://github.com/dyang886/Game-Save-Manager)，现独立维护。感谢原作者 Yongcan Yang 及贡献者。
